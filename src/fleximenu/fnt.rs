@@ -1,11 +1,10 @@
-use crate::additional_bindings::fontconfig::{FC_COLOR, FC_FAMILY};
+use crate::additional_bindings::fontconfig::FC_FAMILY;
 use fontconfig::fontconfig::{
-    FcBool, FcChar8, FcFontList, FcFontSet, FcFontSetDestroy, FcNameParse, FcObjectSetBuild,
-    FcObjectSetDestroy, FcPatternDestroy, FcPatternGetBool, FcResultMatch,
+    FcChar8, FcFontList, FcFontSet, FcFontSetDestroy, FcNameParse, FcObjectSetBuild,
+    FcObjectSetDestroy, FcPatternDestroy,
 };
 use libc::c_uint;
 use std::ffi::c_void;
-use std::mem::MaybeUninit;
 use std::ptr;
 use x11::xft::{
     FcPattern, XftFont, XftFontClose, XftFontOpenName, XftFontOpenPattern, XftNameParse,
@@ -83,26 +82,6 @@ impl Fnt {
                 pattern = ptr::null_mut();
             } else {
                 return Die::stderr("No font specified.".to_owned());
-            }
-
-            /* Do not allow using color fonts. This is a workaround for a BadLength
-             * error from Xft with color glyphs. Modelled on the Xterm workaround. See
-             * https://bugzilla.redhat.com/show_bug.cgi?id=1498269
-             * https://lists.suckless.org/dev/1701/30932.html
-             * https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=916349
-             * and lots more all over the internet.
-             */
-            let mut iscol = MaybeUninit::<FcBool>::uninit();
-            if FcPatternGetBool(
-                (*xfont).pattern as *mut c_void,
-                FC_COLOR,
-                0,
-                iscol.as_mut_ptr(),
-            ) == FcResultMatch
-                && iscol.assume_init() != 0
-            {
-                XftFontClose(drw.dpy, xfont);
-                return Die::stderr("Cannot load color fonts".to_owned());
             }
 
             let height = (*xfont).ascent + (*xfont).descent;

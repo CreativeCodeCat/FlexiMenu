@@ -1,4 +1,4 @@
-use crate::additional_bindings::fontconfig::{FcFalse, FcTrue, FC_CHARSET, FC_COLOR, FC_SCALABLE};
+use crate::additional_bindings::fontconfig::{FcTrue, FC_CHARSET, FC_SCALABLE};
 use fontconfig::fontconfig::{
     FcCharSetAddChar, FcCharSetCreate, FcCharSetDestroy, FcConfigSubstitute, FcMatchPattern,
     FcPatternAddBool, FcPatternAddCharSet, FcPatternDestroy, FcPatternDuplicate,
@@ -141,7 +141,6 @@ impl Drw {
                             FcPatternDuplicate(self.fonts[0].pattern_pointer as *const c_void);
                         FcPatternAddCharSet(fcpattern as *mut c_void, FC_CHARSET, fccharset);
                         FcPatternAddBool(fcpattern as *mut c_void, FC_SCALABLE, FcTrue);
-                        FcPatternAddBool(fcpattern as *mut c_void, FC_COLOR, FcFalse);
 
                         FcConfigSubstitute(
                             ptr::null_mut(),
