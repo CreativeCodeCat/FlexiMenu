@@ -12,7 +12,7 @@ use x11::xlib::{
 
 use crate::additional_bindings::xlib::{XNClientWindow, XNFocusWindow, XNInputStyle};
 use crate::config::{Clrs::*, Schemes::*, MINHEIGHT_AUTO};
-use crate::drw::Drw;
+use crate::drw::{Drw, TextOption::Prompt};
 use crate::result::*;
 use crate::util::grabfocus;
 
@@ -25,6 +25,50 @@ fn intersect(x: c_int, y: c_int, w: c_int, h: c_int, r: *mut XineramaScreenInfo)
 }
 
 impl Drw {
+    /// Sets the menu width and returns its position within the given screen area
+    fn place(
+        &mut self,
+        area_x: c_int,
+        area_y: c_int,
+        area_w: c_int,
+        area_h: c_int,
+    ) -> CompResult<(c_int, c_int)> {
+        if self.config.center {
+            // as wide as the widest item and prompt, but no smaller than min_width
+            self.w = if self.config.menu_width > 0 {
+                self.config.menu_width as c_int
+            } else {
+                let promptw = if self.config.prompt.len() > 0 {
+                    self.textw(Prompt)?
+                } else {
+                    0
+                };
+                let itemw = self.get_items().iter().map(|i| i.width).max().unwrap_or(0);
+                (itemw + promptw).max(self.config.min_width as c_int)
+            }
+            .min(area_w);
+            Ok((
+                area_x + (area_w - self.w) / 2 + self.config.xoffset,
+                area_y + (area_h - self.h) / 2 + self.config.yoffset,
+            ))
+        } else {
+            self.w = if self.config.menu_width > 0 {
+                self.config.menu_width as c_int
+            } else {
+                area_w
+            };
+            Ok((
+                area_x + self.config.xoffset,
+                area_y
+                    + if self.config.topbar {
+                        self.config.yoffset
+                    } else {
+                        area_h - self.h - self.config.yoffset
+                    },
+            ))
+        }
+    }
+
     pub fn setup(&mut self, parentwin: u64, root: u64) -> CompResult<()> {
         unsafe {
             let mut x: c_int;
@@ -137,21 +181,16 @@ impl Drw {
                         }
                     }
                 }
-                x = (*info.offset(i as isize)).x_org as c_int + self.config.xoffset;
-                y = (*info.offset(i as isize)).y_org as c_int
-                    + (if self.config.topbar {
-                        self.config.yoffset
-                    } else {
-                        (*info.offset(i as isize)).height as c_int
-                            - self.h as c_int
-                            - self.config.yoffset
-                    });
-                self.w = if self.config.menu_width > 0 {
-                    self.config.menu_width as c_int
-                } else {
-                    (*info.offset(i as isize)).width as c_int
-                };
+                let screen = *info.offset(i as isize);
                 XFree(info as *mut c_void);
+                let (px, py) = self.place(
+                    screen.x_org as c_int,
+                    screen.y_org as c_int,
+                    screen.width as c_int,
+                    screen.height as c_int,
+                )?;
+                x = px;
+                y = py;
             } else {
                 if XGetWindowAttributes(self.dpy, parentwin, &mut self.wa) == 0 {
                     return Die::stderr(format!(
@@ -159,17 +198,9 @@ impl Drw {
                         parentwin
                     ));
                 }
-                x = self.config.xoffset;
-                y = if self.config.topbar {
-                    self.config.yoffset
-                } else {
-                    self.wa.height - self.h as c_int - self.config.yoffset
-                };
-                self.w = if self.config.menu_width > 0 {
-                    self.config.menu_width as c_int
-                } else {
-                    self.wa.width
-                };
+                let (px, py) = self.place(0, 0, self.wa.width, self.wa.height)?;
+                x = px;
+                y = py;
             }
 
             let mut swa = XSetWindowAttributes {

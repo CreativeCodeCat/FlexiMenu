@@ -56,6 +56,11 @@ pub fn validate(config: &mut Config) -> CompResult<()> {
         config.topbar = false;
     }
 
+    // center
+    if CLAP_FLAGS.occurrences_of("center") == 1 {
+        config.center = true;
+    }
+
     // fast
     if CLAP_FLAGS.occurrences_of("fast") == 1 {
         config.fast = true;

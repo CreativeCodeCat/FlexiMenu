@@ -129,6 +129,12 @@ impl ConfigDefault {
     pub fn topbar() -> bool {
         true
     }
+    pub fn center() -> bool {
+        false
+    }
+    pub fn min_width() -> u32 {
+        500 // smallest width of a centered menu
+    }
     pub fn prompt() -> String {
         String::new()
     }

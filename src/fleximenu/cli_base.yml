@@ -13,6 +13,11 @@ args:
       help:  Places menu at bottom of the screen
       short: b
       long:  bottom
+  - center:
+      help:  Centers the menu on the screen, only as wide as its items
+        (at least 500 pixels). Use -z to set the width instead
+      short: c
+      long:  center
   - fast:
       help:  Grabs keyboard before reading stdin
       short: f

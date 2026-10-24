@@ -36,6 +36,8 @@ pub enum DefaultWidth {
 pub struct Config {
     pub lines: c_uint,
     pub topbar: bool,
+    pub center: bool,
+    pub min_width: c_uint,
     pub prompt: String,
     pub promptw: c_int,
     pub fontstrings: Vec<String>,
@@ -62,6 +64,8 @@ impl Default for Config {
         Self {
             lines: ConfigDefault::lines(),
             topbar: ConfigDefault::topbar(),
+            center: ConfigDefault::center(),
+            min_width: ConfigDefault::min_width(),
             prompt: ConfigDefault::prompt(),
             promptw: 0,
             fontstrings: ConfigDefault::fontstrings(),
