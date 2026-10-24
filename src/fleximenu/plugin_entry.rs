@@ -163,18 +163,19 @@ impl ConfigDefault {
         0 // 0 means full screen width
     }
     pub fn colors() -> [[[u8; 8]; 2]; SchemeLast as usize] {
+        // KDE's Breeze Dark colors (BreezeDark.colors)
         /*                         [  fg             bg         ]*/
         let mut arr = [[[0; 8]; 2]; SchemeLast as usize];
-        arr[SchemeNorm as usize] = [*b"#bbbbbb\0", *b"#222222\0"];
-        arr[SchemeSel as usize] = [*b"#eeeeee\0", *b"#005577\0"];
-        arr[SchemeOut as usize] = [*b"#000000\0", *b"#00ffff\0"];
-        arr[SchemeHighlight as usize] = [*b"#f1fa8c\0", *b"#596377\0"];
-        arr[SchemeHover as usize] = [*b"#ffffff\0", *b"#353D4B\0"];
-        arr[SchemeGreen as usize] = [*b"#ffffff\0", *b"#52E067\0"];
-        arr[SchemeRed as usize] = [*b"#ffffff\0", *b"#e05252\0"];
-        arr[SchemeYellow as usize] = [*b"#ffffff\0", *b"#e0c452\0"];
-        arr[SchemeBlue as usize] = [*b"#ffffff\0", *b"#5280e0\0"];
-        arr[SchemePurple as usize] = [*b"#ffffff\0", *b"#9952e0\0"];
+        arr[SchemeNorm as usize] = [*b"#fcfcfc\0", *b"#202326\0"]; // window
+        arr[SchemeSel as usize] = [*b"#fcfcfc\0", *b"#3daee9\0"]; // selection
+        arr[SchemeOut as usize] = [*b"#fcfcfc\0", *b"#1e5774\0"]; // selection alternate
+        arr[SchemeHighlight as usize] = [*b"#fdbc4b\0", *b"#292c30\0"]; // button
+        arr[SchemeHover as usize] = [*b"#fcfcfc\0", *b"#1e5774\0"]; // selection alternate
+        arr[SchemeGreen as usize] = [*b"#fcfcfc\0", *b"#27ae60\0"]; // positive
+        arr[SchemeRed as usize] = [*b"#fcfcfc\0", *b"#da4453\0"]; // negative
+        arr[SchemeYellow as usize] = [*b"#202326\0", *b"#fdbc4b\0"]; // yellow
+        arr[SchemeBlue as usize] = [*b"#fcfcfc\0", *b"#1d99f3\0"]; // link
+        arr[SchemePurple as usize] = [*b"#fcfcfc\0", *b"#9b59b6\0"]; // visited
         arr
     }
     pub fn nostdin() -> bool {
