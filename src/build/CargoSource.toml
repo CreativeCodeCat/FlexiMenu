@@ -14,8 +14,8 @@ name = "fleximenu"
 path = "../fleximenu/main.rs"
 
 [dependencies]
+arboard = { version = "3.4", default-features = false }
 clap = { version = "2.33.3", features = ["yaml"]}
-clipboard = "0.5"
 itertools = "0.9"
 lazy_static = "1.4.0"
 libc = "0.2.69"

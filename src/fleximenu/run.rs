@@ -1,4 +1,4 @@
-use clipboard::{ClipboardContext, ClipboardProvider};
+use arboard::Clipboard;
 use libc::{c_char, c_int, c_ulong, iscntrl};
 use regex::Regex;
 use std::mem::MaybeUninit;
@@ -433,11 +433,11 @@ impl Drw {
 
     fn paste(&mut self) -> CompResult<()> {
         // paste selection and redraw
-        let mut ctx: ClipboardContext = match ClipboardProvider::new() {
+        let mut ctx = match Clipboard::new() {
             Ok(ctx) => ctx,
             Err(_) => return Die::stderr("Could not grab clipboard".to_owned()),
         };
-        match ctx.get_contents() {
+        match ctx.get_text() {
             Ok(mut clip) => {
                 clip = match Regex::new(r"[\t]") {
                     Ok(re) => re,
