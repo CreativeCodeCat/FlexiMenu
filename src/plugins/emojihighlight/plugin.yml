@@ -3,7 +3,8 @@ about: |
   emoji-highlight patch. Enabled by default; pass --nohighlight to disable.
   Lines starting with > are comments, and >>X colors a comment with X.
   Lines starting with :X are colored with X when selected, and with
-  :X followed by a space, the next emoji is drawn in a colored box.
+  :X followed by a space, the text up to the next space (an emoji, or
+  a symbol like []=) is drawn in a colored box.
   X is one of r(ed) g(reen) y(ellow) b(lue) p(urple) h(ighlight) s(elected)
 entry: main.rs
 
