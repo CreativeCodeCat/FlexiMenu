@@ -78,6 +78,9 @@ impl Fnt {
                         fontname
                     ));
                 }
+                // xfont now owns the pattern and frees it in XftFontClose,
+                // so don't keep it around to be freed a second time
+                pattern = ptr::null_mut();
             } else {
                 return Die::stderr("No font specified.".to_owned());
             }
