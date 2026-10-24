@@ -4,13 +4,14 @@ use regex::Regex;
 use std::mem::MaybeUninit;
 use unicode_segmentation::UnicodeSegmentation;
 use x11::xlib::{
-    ControlMask, DestroyNotify, Expose, False, FocusIn, KeyPress, Mod1Mask, SelectionNotify,
-    ShiftMask, VisibilityNotify, VisibilityUnobscured, XEvent, XFilterEvent, XInternAtom,
-    XKeyEvent, XLookupBoth, XLookupChars, XLookupKeySym, XNextEvent, XRaiseWindow, XmbLookupString,
+    Button1, Button2, Button3, Button4, Button5, ButtonPress, ControlMask, DestroyNotify, Expose,
+    False, FocusIn, KeyPress, Mod1Mask, MotionNotify, SelectionNotify, ShiftMask, VisibilityNotify,
+    VisibilityUnobscured, XButtonEvent, XEvent, XFilterEvent, XInternAtom, XKeyEvent, XLookupBoth,
+    XLookupChars, XLookupKeySym, XMotionEvent, XNextEvent, XRaiseWindow, XmbLookupString,
 };
 
 use crate::drw::Drw;
-use crate::item::Partition;
+use crate::item::{Click, Partition};
 use crate::result::*;
 use crate::util::grabfocus;
 
@@ -45,6 +46,12 @@ impl Drw {
                         Ok(false) => {}
                         Err(err) => return Err(err),
                     },
+                    ButtonPress => match self.buttonpress(ev.button) {
+                        Ok(true) => break,
+                        Ok(false) => {}
+                        Err(err) => return Err(err),
+                    },
+                    MotionNotify => self.motion(ev.motion)?,
                     SelectionNotify => {
                         if ev.selection.property == utf8 {
                             self.paste()?;
@@ -226,6 +233,58 @@ impl Drw {
                 }
             }
             self.keyprocess(ksym, buf, len, ev.state)
+        }
+    }
+
+    /// The item or arrow at a point in the menu, as last drawn
+    fn click_at(&self, x: c_int, y: c_int) -> Option<Click> {
+        self.items
+            .as_ref()
+            .unwrap()
+            .hitboxes
+            .iter()
+            .find(|hitbox| hitbox.contains(x, y))
+            .map(|hitbox| hitbox.click)
+    }
+
+    fn buttonpress(&mut self, ev: XButtonEvent) -> CompResult<bool> {
+        // bool - should exit?
+        // Each button does the same as a key, so they behave alike
+        use x11::keysym::*;
+        if ev.window != self.pseudo_globals.win {
+            return Ok(false);
+        }
+        let nobuf = [0; 32];
+        match ev.button {
+            Button1 => match self.click_at(ev.x, ev.y) {
+                Some(Click::Item(index)) => {
+                    // like Enter; Ctrl-click like Ctrl-Enter keeps the menu open
+                    self.items.as_mut().unwrap().curr = index;
+                    self.keyprocess(XK_Return, nobuf, 0, ev.state & ControlMask)
+                }
+                Some(Click::PrevPage) => self.keyprocess(XK_Prior, nobuf, 0, 0),
+                Some(Click::NextPage) => self.keyprocess(XK_Next, nobuf, 0, 0),
+                None => Ok(false),
+            },
+            Button2 => self.paste().map(|_| false),
+            Button3 => self.keyprocess(XK_Escape, nobuf, 0, 0),
+            Button4 => self.keyprocess(XK_Up, nobuf, 0, 0), // scroll up
+            Button5 => self.keyprocess(XK_Down, nobuf, 0, 0), // scroll down
+            _ => Ok(false),
+        }
+    }
+
+    fn motion(&mut self, ev: XMotionEvent) -> CompResult<()> {
+        // select the item under the pointer
+        if ev.window != self.pseudo_globals.win {
+            return Ok(());
+        }
+        match self.click_at(ev.x, ev.y) {
+            Some(Click::Item(index)) if index != self.items.as_ref().unwrap().curr => {
+                self.items.as_mut().unwrap().curr = index;
+                self.draw()
+            }
+            _ => Ok(()),
         }
     }
 

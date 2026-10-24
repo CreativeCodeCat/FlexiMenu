@@ -106,11 +106,36 @@ impl std::ops::Index<usize> for Partition {
     }
 }
 
+/// What clicking a part of the menu does
+#[derive(Debug, Clone, Copy)]
+pub enum Click {
+    Item(usize), // the item with this index among all matches
+    PrevPage,    // the '<' arrow
+    NextPage,    // the '>' arrow
+}
+
+/// Where something clickable was last drawn
+#[derive(Debug)]
+pub struct Hitbox {
+    pub x: c_int,
+    pub y: c_int,
+    pub w: c_int,
+    pub h: c_int,
+    pub click: Click,
+}
+
+impl Hitbox {
+    pub fn contains(&self, x: c_int, y: c_int) -> bool {
+        x >= self.x && x < self.x + self.w && y >= self.y && y < self.y + self.h
+    }
+}
+
 #[derive(Debug)]
 pub struct Items {
     pub data: Vec<Item>,
     pub cached_partitions: Vec<Partition>, // seperated into screens
     pub curr: usize,
+    pub hitboxes: Vec<Hitbox>, // for the mouse
 }
 
 impl Items {
@@ -119,6 +144,7 @@ impl Items {
             data,
             cached_partitions: Vec::new(),
             curr: 0,
+            hitboxes: Vec::new(),
         }
     }
     pub fn match_len(&self) -> usize {
@@ -175,10 +201,14 @@ impl Items {
 
         if matched_partitions.len() == 0 {
             drw.items.as_mut().unwrap().cached_partitions = matched_partitions;
+            drw.items.as_mut().unwrap().hitboxes = Vec::new();
             return Ok(false); // nothing to draw
         }
 
         let (partition_i, partition) = Partition::decompose(&matched_partitions, drw);
+        let first_index = drw.items.as_ref().unwrap().curr - partition_i; // of this page
+        let bh = drw.pseudo_globals.bh as c_int;
+        let mut hitboxes = Vec::new();
 
         let mut coord = match direction {
             Horizontal => {
@@ -208,6 +238,13 @@ impl Items {
             coord += drw.pseudo_globals.promptw + drw.pseudo_globals.inputw;
             if partition > 0 {
                 // draw langle if required
+                hitboxes.push(Hitbox {
+                    x: coord,
+                    y: 0,
+                    w: langle_width,
+                    h: bh,
+                    click: Click::PrevPage,
+                });
                 drw.setscheme(SchemeNorm);
                 coord = drw
                     .text(
@@ -235,6 +272,7 @@ impl Items {
 
         for index in 0..matched_partitions[partition].len() {
             let selected = index == partition_i;
+            let start = coord;
             match direction {
                 Horizontal => {
                     if partition + 1 < matched_partitions.len() {
@@ -270,6 +308,13 @@ impl Items {
                             selected,
                         )?;
                     }
+                    hitboxes.push(Hitbox {
+                        x: start,
+                        y: 0,
+                        w: coord - start,
+                        h: bh,
+                        click: Click::Item(first_index + index),
+                    });
                 }
                 Vertical => {
                     drw.draw_item(
@@ -279,12 +324,31 @@ impl Items {
                         drw.w,
                         selected,
                     )?;
+                    hitboxes.push(Hitbox {
+                        x: 0,
+                        y: start,
+                        w: drw.w,
+                        h: bh,
+                        click: Click::Item(first_index + index),
+                    });
                     coord += drw.pseudo_globals.bh as i32;
                 }
             }
         }
+        if let Horizontal = direction {
+            if partition + 1 < matched_partitions.len() {
+                hitboxes.push(Hitbox {
+                    x: drw.w - rangle_width,
+                    y: 0,
+                    w: rangle_width,
+                    h: bh,
+                    click: Click::NextPage,
+                });
+            }
+        }
 
         drw.items.as_mut().unwrap().cached_partitions = matched_partitions;
+        drw.items.as_mut().unwrap().hitboxes = hitboxes;
 
         Ok(true)
     }

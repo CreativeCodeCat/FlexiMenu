@@ -3,11 +3,11 @@ use std::mem::MaybeUninit;
 use std::ptr;
 use x11::xinerama::{XineramaQueryScreens, XineramaScreenInfo};
 use x11::xlib::{
-    CWBackPixel, CWEventMask, CWOverrideRedirect, Display, ExposureMask, FocusChangeMask,
-    KeyPressMask, PointerRoot, SubstructureNotifyMask, VisibilityChangeMask, Window, XClassHint,
-    XCreateIC, XCreateWindow, XFree, XGetInputFocus, XGetWindowAttributes, XIMPreeditNothing,
-    XIMStatusNothing, XMapRaised, XOpenIM, XQueryPointer, XQueryTree, XSelectInput, XSetClassHint,
-    XSetWindowAttributes,
+    ButtonPressMask, CWBackPixel, CWEventMask, CWOverrideRedirect, Display, ExposureMask,
+    FocusChangeMask, KeyPressMask, PointerMotionMask, PointerRoot, SubstructureNotifyMask,
+    VisibilityChangeMask, Window, XClassHint, XCreateIC, XCreateWindow, XFree, XGetInputFocus,
+    XGetWindowAttributes, XIMPreeditNothing, XIMStatusNothing, XMapRaised, XOpenIM, XQueryPointer,
+    XQueryTree, XSelectInput, XSetClassHint, XSetWindowAttributes,
 };
 
 use crate::additional_bindings::xlib::{XNClientWindow, XNFocusWindow, XNInputStyle};
@@ -266,7 +266,11 @@ impl Drw {
                 background_pixel: (*self.pseudo_globals.schemeset[SchemeNorm as usize]
                     [ColBg as usize])
                     .pixel,
-                event_mask: ExposureMask | KeyPressMask | VisibilityChangeMask,
+                event_mask: ExposureMask
+                    | KeyPressMask
+                    | VisibilityChangeMask
+                    | ButtonPressMask
+                    | PointerMotionMask,
                 background_pixmap: 0,
                 backing_pixel: 0,
                 backing_store: 0,
