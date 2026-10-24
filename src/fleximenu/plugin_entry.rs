@@ -19,6 +19,7 @@ use crate::config::Schemes::*;
 impl Drw {
     /**
      * When taking input from stdin, apply post-processing
+     * With nostdin, this gets no lines and can supply the menu items itself
      */
     pub fn format_stdin(&mut self, lines: Vec<String>) -> CompResult<Vec<String>> {
         Ok(lines)

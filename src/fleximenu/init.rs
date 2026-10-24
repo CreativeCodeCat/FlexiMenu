@@ -54,9 +54,11 @@ impl Drw {
             ret.pseudo_globals.lrpad = ret.fonts[0].height as i32;
 
             ret.items = if ret.config.nostdin {
-                ret.format_stdin(vec![])?;
+                // plugins can still provide items through format_stdin
+                let lines = ret.format_stdin(vec![])?;
+                let items = make_items(&mut ret, lines)?;
                 grabkeyboard(ret.dpy, ret.config.embed)?;
-                Some(Items::new(Vec::new()))
+                Some(Items::new(items))
             } else {
                 Some(Items::new(if ret.config.fast && isatty(0) == 0 {
                     grabkeyboard(ret.dpy, ret.config.embed)?;

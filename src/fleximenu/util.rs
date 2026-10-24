@@ -18,8 +18,14 @@ pub fn readstdin(drw: &mut Drw) -> CompResult<Vec<Item>> {
             Err(e) => return Die::stderr(format!("Could not read from stdin: {}", e)),
         }
     }
+    let lines = drw.format_stdin(lines)?;
+    make_items(drw, lines)
+}
+
+/// Turns lines from format_stdin into menu items
+pub fn make_items(drw: &mut Drw, lines: Vec<String>) -> CompResult<Vec<Item>> {
     let mut ret = Vec::new();
-    for line in drw.format_stdin(lines)?.into_iter() {
+    for line in lines.into_iter() {
         let item = Item::new(line, false, drw)?;
         if item.width as i32 > drw.pseudo_globals.inputw {
             drw.pseudo_globals.inputw = item.width as i32;
