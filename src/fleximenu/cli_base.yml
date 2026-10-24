@@ -18,6 +18,12 @@ args:
         (at least 500 pixels). Use -z to set the width instead
       short: c
       long:  center
+  - mouse:
+      help:  Opens the menu at the mouse pointer, only as wide as its items
+        (at least 500 pixels). Use -z to set the width instead
+      short: M
+      long:  mouse
+      conflicts_with: center
   - fast:
       help:  Grabs keyboard before reading stdin
       short: f

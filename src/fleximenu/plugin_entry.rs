@@ -132,8 +132,11 @@ impl ConfigDefault {
     pub fn center() -> bool {
         false
     }
+    pub fn mouse() -> bool {
+        false
+    }
     pub fn min_width() -> u32 {
-        500 // smallest width of a centered menu
+        500 // smallest width of a centered or mouse menu
     }
     pub fn prompt() -> String {
         String::new()

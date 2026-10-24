@@ -61,6 +61,11 @@ pub fn validate(config: &mut Config) -> CompResult<()> {
         config.center = true;
     }
 
+    // mouse
+    if CLAP_FLAGS.occurrences_of("mouse") == 1 {
+        config.mouse = true;
+    }
+
     // fast
     if CLAP_FLAGS.occurrences_of("fast") == 1 {
         config.fast = true;

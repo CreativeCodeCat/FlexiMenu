@@ -3,9 +3,9 @@ use std::mem::MaybeUninit;
 use std::ptr;
 use x11::xinerama::{XineramaQueryScreens, XineramaScreenInfo};
 use x11::xlib::{
-    CWBackPixel, CWEventMask, CWOverrideRedirect, ExposureMask, FocusChangeMask, KeyPressMask,
-    PointerRoot, SubstructureNotifyMask, VisibilityChangeMask, Window, XClassHint, XCreateIC,
-    XCreateWindow, XFree, XGetInputFocus, XGetWindowAttributes, XIMPreeditNothing,
+    CWBackPixel, CWEventMask, CWOverrideRedirect, Display, ExposureMask, FocusChangeMask,
+    KeyPressMask, PointerRoot, SubstructureNotifyMask, VisibilityChangeMask, Window, XClassHint,
+    XCreateIC, XCreateWindow, XFree, XGetInputFocus, XGetWindowAttributes, XIMPreeditNothing,
     XIMStatusNothing, XMapRaised, XOpenIM, XQueryPointer, XQueryTree, XSelectInput, XSetClassHint,
     XSetWindowAttributes,
 };
@@ -24,29 +24,72 @@ fn intersect(x: c_int, y: c_int, w: c_int, h: c_int, r: *mut XineramaScreenInfo)
     }
 }
 
+/// Where the mouse pointer is, relative to the given window
+fn pointer_position(dpy: *mut Display, win: Window) -> Option<(c_int, c_int)> {
+    unsafe {
+        let mut root = MaybeUninit::uninit();
+        let mut child = MaybeUninit::uninit();
+        let (mut root_x, mut root_y, mut win_x, mut win_y, mut mask) = (0, 0, 0, 0, 0);
+        if XQueryPointer(
+            dpy,
+            win,
+            root.as_mut_ptr(),
+            child.as_mut_ptr(),
+            &mut root_x,
+            &mut root_y,
+            &mut win_x,
+            &mut win_y,
+            &mut mask,
+        ) != 0
+        {
+            Some((win_x, win_y))
+        } else {
+            None
+        }
+    }
+}
+
 impl Drw {
-    /// Sets the menu width and returns its position within the given screen area
+    /// Width of a menu that isn't a full screen bar: as wide as the widest
+    /// item and prompt, but no smaller than min_width, unless -z gives a width
+    fn fitted_width(&mut self, area_w: c_int) -> CompResult<c_int> {
+        Ok(if self.config.menu_width > 0 {
+            self.config.menu_width as c_int
+        } else {
+            let promptw = if self.config.prompt.len() > 0 {
+                self.textw(Prompt)?
+            } else {
+                0
+            };
+            let itemw = self.get_items().iter().map(|i| i.width).max().unwrap_or(0);
+            (itemw + promptw).max(self.config.min_width as c_int)
+        }
+        .min(area_w))
+    }
+
+    /// Sets the menu width and returns its position within the given screen
+    /// area. `mouse` is the pointer position, when opening at the pointer
     fn place(
         &mut self,
         area_x: c_int,
         area_y: c_int,
         area_w: c_int,
         area_h: c_int,
+        mouse: Option<(c_int, c_int)>,
     ) -> CompResult<(c_int, c_int)> {
-        if self.config.center {
-            // as wide as the widest item and prompt, but no smaller than min_width
-            self.w = if self.config.menu_width > 0 {
-                self.config.menu_width as c_int
-            } else {
-                let promptw = if self.config.prompt.len() > 0 {
-                    self.textw(Prompt)?
-                } else {
-                    0
-                };
-                let itemw = self.get_items().iter().map(|i| i.width).max().unwrap_or(0);
-                (itemw + promptw).max(self.config.min_width as c_int)
-            }
-            .min(area_w);
+        if let Some((mouse_x, mouse_y)) = mouse {
+            // top left corner at the pointer, moved back on screen if needed
+            self.w = self.fitted_width(area_w)?;
+            Ok((
+                (mouse_x + self.config.xoffset)
+                    .min(area_x + area_w - self.w)
+                    .max(area_x),
+                (mouse_y + self.config.yoffset)
+                    .min(area_y + area_h - self.h)
+                    .max(area_y),
+            ))
+        } else if self.config.center {
+            self.w = self.fitted_width(area_w)?;
             Ok((
                 area_x + (area_w - self.w) / 2 + self.config.xoffset,
                 area_y + (area_h - self.h) / 2 + self.config.yoffset,
@@ -89,6 +132,12 @@ impl Drw {
             self.pseudo_globals.bh =
                 (self.fonts.iter().map(|f| f.height).max().unwrap() + 4).max(minheight);
             self.h = ((self.config.lines + 1) * self.pseudo_globals.bh) as c_int;
+
+            let mouse = if self.config.mouse {
+                pointer_position(self.dpy, parentwin)
+            } else {
+                None
+            };
 
             let mut dws: *mut Window = ptr::null_mut();
             let mut w = MaybeUninit::<Window>::uninit();
@@ -181,6 +230,14 @@ impl Drw {
                         }
                     }
                 }
+                /* with --mouse, use the screen the pointer is on */
+                if let Some((mouse_x, mouse_y)) = mouse {
+                    if let Some(j) = (0..n)
+                        .find(|&j| intersect(mouse_x, mouse_y, 1, 1, info.offset(j as isize)) != 0)
+                    {
+                        i = j;
+                    }
+                }
                 let screen = *info.offset(i as isize);
                 XFree(info as *mut c_void);
                 let (px, py) = self.place(
@@ -188,6 +245,7 @@ impl Drw {
                     screen.y_org as c_int,
                     screen.width as c_int,
                     screen.height as c_int,
+                    mouse,
                 )?;
                 x = px;
                 y = py;
@@ -198,7 +256,7 @@ impl Drw {
                         parentwin
                     ));
                 }
-                let (px, py) = self.place(0, 0, self.wa.width, self.wa.height)?;
+                let (px, py) = self.place(0, 0, self.wa.width, self.wa.height, mouse)?;
                 x = px;
                 y = py;
             }
