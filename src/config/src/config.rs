@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use man_dmenu::*;
+use man_fleximenu::*;
 use std::env;
 use std::fs::File;
 use std::io::{Read, Write};
@@ -33,14 +33,14 @@ fn main() {
     // 1) clap command line yaml file
     // 2) proc_use import files
     // 3) overrider watch files
-    // 4) Cargo.toml<dmenu-build> plugin dependencies
+    // 4) Cargo.toml<fleximenu-build> plugin dependencies
     // 5) manpage (used later)
     let mut watch_globs = Vec::new();
     let mut deps_vec = Vec::new();
-    let mut manpage = Manpage::new("dmenu", &env::var("VERSION").unwrap(), 1);
+    let mut manpage = Manpage::new("fleximenu", &env::var("VERSION").unwrap(), 1);
 
     // prepare to edit cli_base args
-    let mut yaml = get_yaml("dmenu/cli_base.yml", None);
+    let mut yaml = get_yaml("fleximenu/cli_base.yml", None);
     let yaml_args: &mut Vec<yaml::Yaml> = get_yaml_args(&mut yaml).unwrap();
 
     // For every plugin, check if it has arguements. If so, add them to clap and overrider
@@ -105,15 +105,15 @@ fn main() {
     manpage
         .desc_short("dynamic menu")
         .description(
-            "dmenu",
+            "fleximenu",
             "is a dynamic menu for X, which reads a list of newline\\-separated \
 		      items from stdin.  When the user selects an item and presses \
-		      Return, their choice is printed to stdout and dmenu terminates.  \
+		      Return, their choice is printed to stdout and fleximenu terminates.  \
 		      Entering text will narrow the items to those matching the tokens \
 		      in the input.",
         )
         .description(
-            "dmenu_run",
+            "fleximenu_run",
             "is a script used by\n\
 		       .IR dwm (1)\n\
 		       which lists programs in the user's $PATH and runs the result in \
@@ -121,7 +121,7 @@ fn main() {
 		       is the recommended alternative.",
         )
         .build(
-            "This dmenu is dmenu-rs, a rewrite of dmenu in rust. It's faster and more \
+            "FlexiMenu is a rewrite of dmenu in Rust. It's faster and more \
 		 flexible.",
         );
 
@@ -174,7 +174,7 @@ fn main() {
         }
     }
 
-    manpage.write_to_file(target_path.join("dmenu.1"));
+    manpage.write_to_file(target_path.join("fleximenu.1"));
 
     // Dump yaml, clap will parse this later.
     let mut yaml_out = String::new();

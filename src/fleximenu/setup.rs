@@ -31,8 +31,8 @@ impl Drw {
             let mut y: c_int;
 
             let mut ch: XClassHint = XClassHint {
-                res_name: (*b"dmenu\0").as_ptr() as *mut c_char,
-                res_class: (*b"dmenu\0").as_ptr() as *mut c_char,
+                res_name: (*b"fleximenu\0").as_ptr() as *mut c_char,
+                res_class: (*b"fleximenu\0").as_ptr() as *mut c_char,
             };
 
             // appearances are set up in constructor

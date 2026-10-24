@@ -2,8 +2,8 @@
 
 Source code directory. The folders contained here, as well as their
 functions are as follows:  
-- dmenu  
-  The main `dmenu(1)` program
+- fleximenu  
+  The main `fleximenu(1)` program
 - plugins
   Plugin files that can be conditionally compiled in
 - stest  
@@ -13,4 +13,4 @@ functions are as follows:
 - man  
   Man page contents
 - sh  
-  Shell scripts for drop-in compatibility with dmenu
+  Helper shell scripts, equivalents of dmenu's `dmenu_path` and `dmenu_run`

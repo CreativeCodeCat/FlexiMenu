@@ -1,4 +1,4 @@
-name: dmenu
+name: fleximenu
 version: $VERSION # filled in by build.rs
 about: dynamic menu
 

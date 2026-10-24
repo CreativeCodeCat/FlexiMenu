@@ -1,0 +1,2 @@
+#!/bin/sh
+fleximenu_path | fleximenu "$@" | ${SHELL:-"/bin/sh"} &

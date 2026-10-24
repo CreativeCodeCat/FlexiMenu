@@ -22,7 +22,7 @@ pub use Direction::*;
 
 #[derive(Debug, Clone)]
 pub struct Item {
-    // dmenu entry
+    // menu entry
     pub text: String,
     pub out: bool,
     pub width: c_int,

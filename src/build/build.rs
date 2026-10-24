@@ -41,7 +41,7 @@ fn main() {
 
     // finalize overrider and proc_use initilization
     let mut usebuilder = UseBuilder::new();
-    let mut overrider_watch = vec!["../dmenu/plugin_entry.rs"];
+    let mut overrider_watch = vec!["../fleximenu/plugin_entry.rs"];
     for file in &watch_globs {
         overrider_watch.push(&file.0);
         usebuilder.mod_glob_alias(&file.0, &file.1);

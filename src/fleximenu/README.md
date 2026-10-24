@@ -1,6 +1,6 @@
-# dmenu
+# fleximenu
 
-This folder contains the source code for the main dmenu functionality.  
+This folder contains the source code for the main FlexiMenu functionality.  
 Files, along with their functions, are as follows:
 - additional_bindings.rs  
   Module configuration for generated bindings taken from the `headers`

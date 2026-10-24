@@ -12,7 +12,7 @@
 
 vgcore.*
 massif*
-dmenu-*
+fleximenu-*
 
 # m4 stuff
 src/build/Cargo.toml

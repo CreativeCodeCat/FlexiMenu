@@ -1,8 +1,8 @@
 # sh
 
 This directory contains the following shell scripts:
-- dmenu_path
-- dmenu_run
+- fleximenu_path
+- fleximenu_run
 
-These scripts simplify some common dmenu-functions,
+These scripts simplify some common FlexiMenu functions,
 such as launching programs.

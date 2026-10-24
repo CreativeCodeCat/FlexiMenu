@@ -21,13 +21,13 @@ pub fn validate(config: &mut Config) -> CompResult<()> {
         eprintln!("More than 2 version flags do nothing special");
     }
     if CLAP_FLAGS.occurrences_of("version") == 1 {
-        return Die::stdout(format!("dmenu-rs {}", env!("VERSION")));
+        return Die::stdout(format!("FlexiMenu {}", env!("VERSION")));
     }
     if CLAP_FLAGS.occurrences_of("version") >= 2 {
         let plugins = env!("PLUGINS");
         if plugins.len() == 0 {
             return Die::stdout(format!(
-                "dmenu-rs {}\n\
+                "FlexiMenu {}\n\
 					Compiled with rustc {}\n\
 					Compiled without plugins",
                 env!("VERSION"),
@@ -35,7 +35,7 @@ pub fn validate(config: &mut Config) -> CompResult<()> {
             ));
         } else {
             return Die::stdout(format!(
-                "dmenu-rs {}\n\
+                "FlexiMenu {}\n\
 					Compiled with rustc {}\n\
 					Compiled with plugins:\n\
 					{}",

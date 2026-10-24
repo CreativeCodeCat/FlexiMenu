@@ -117,7 +117,7 @@ impl Manpage {
         let build = if let Some(build) = &self.buildmsg {
             let mut ret = format!(".SH BUILD\n{}", build);
             if self.plugins.len() > 0 {
-                ret.push_str("\ndmenu-rs has been compiled with the following plugins:\n");
+                ret.push_str("\nFlexiMenu has been compiled with the following plugins:\n");
                 let descs = self
                     .plugins
                     .iter()
@@ -269,7 +269,7 @@ impl Manpage {
 		 .B {}\n\
 		 {}{}{}{}\n\
 		 .P\n\
-		 .BR dmenu_run \" ...\"",
+		 .BR fleximenu_run \" ...\"",
             self.name,
             synopsis_shorts_str,
             synopsis_other_short_str,

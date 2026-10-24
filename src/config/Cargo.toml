@@ -15,7 +15,7 @@ path = "src/list_plugins.rs"
 [dependencies]
 glob = "0.3.0"
 itertools = "0.10.5"
-man_dmenu = { path = "../man" }
+man_fleximenu = { path = "../man" }
 prettytable-rs = "0.10.0"
 termcolor = "1.1"
 yaml-rust = "0.4.5"

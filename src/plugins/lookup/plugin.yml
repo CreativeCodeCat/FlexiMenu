@@ -18,7 +18,7 @@ args:
   - engine: 
       help: Engine to use
       long_help: >
-        Engine to lookup with. Run `dmenu --lookup --list-engines`
+        Engine to lookup with. Run `fleximenu --lookup --list-engines`
         to show available engines. More engines can be added at
         src/plugins/lookup/engines.rs during build time. 
       long: engine

@@ -1,11 +1,12 @@
-# dmenu-rs - dynamic menu
-dmenu is an efficient dynamic menu for X.  
-dmenu-rs is a 1:1 port of dmenu rewritten in Rust. It looks, feels, and
+# FlexiMenu - dynamic menu
+FlexiMenu is an efficient dynamic menu for X.  
+It is a 1:1 port of dmenu rewritten in Rust. It looks, feels, and
 runs pixel-for-pixel exactly the same.  
-It also has plugin support for easy modification.
+It also has plugin support for easy modification.  
+FlexiMenu is a fork of [dmenu-rs](https://github.com/Shizcow/dmenu-rs) by Shizcow.
 
 ## State of the project
-The master branch is a stable, feature complete product. It it not unmaintained; it's finished.
+The main branch is a stable, feature complete product. It it not unmaintained; it's finished.
 
 There is a __small__ and ever-shrinking chance that this will be updated or overhauled in the distant future. It is much more likely that I will write a spiritual successor from scratch, but that won't happen until at least 2023.
 
@@ -19,14 +20,14 @@ dmenu source is horrendously annoying to read, I decided to rewrite it in a
 language which lends itself to writing code that is easier to modify. There are
 other languages for this, but I like Rust.
 ### Improvements
-As mentioned earlier, `dmenu-rs` runs exactly the same as `dmenu`. However, there
+As mentioned earlier, FlexiMenu runs exactly the same as `dmenu`. However, there
 are some significant performance enhancements under the hood. The most impactful
-is memory usage: `dmenu-rs` uses 21.65% less memory<sup>[1]</sup>, while managing it much
+is memory usage: FlexiMenu uses 21.65% less memory<sup>[1]</sup>, while managing it much
 more safely **without** any performance impacts. The other large improvement is
 plugin support; read below.
 
 ## Plugins
-dmenu-rs leverages rust crates `overrider` and `proc_use` to provide an easy to
+FlexiMenu leverages rust crates `overrider` and `proc_use` to provide an easy to
 write and powerful plugin system. The end-result are plugins which are dead-simple
 to enable.  
 For a list of available plugins and more info on
@@ -40,23 +41,19 @@ For more info on developing plugins, read the [plugin guide](src/plugins/README.
 
 ## Installation
 ### Standalone
-Edit config.mk to match your local setup (dmenu is installed into
+Edit config.mk to match your local setup (fleximenu is installed into
 the /usr/local namespace by default).
 
-Afterwards enter the following command to build dmenu:  
+Afterwards enter the following command to build fleximenu:  
 ```make```  
 Then, to install (if necessary as root):  
 ```make install```
 ### Distros
-dmenu-rs is available from the following sources:
-- [Arch AUR - stable branch](https://aur.archlinux.org/packages/dmenu-rs/)  
-- [Arch AUR - development branch](https://aur.archlinux.org/packages/dmenu-rs-git/)  
+FlexiMenu is not packaged for any distro yet. If you'd like for it to be
+available on your distro, raise an issue or submit a pull request with a
+README change pointing to the released package.
 
-If you'd like for this to be available on another distro, raise an issue
-or submit a pull request with a README change pointing to the released
-package.
-
-## Running dmenu
+## Running FlexiMenu
 See the man page for details. For a quick test, run:  
 ```make test```
 

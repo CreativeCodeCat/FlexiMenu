@@ -32,7 +32,7 @@ pub struct Config {
     /// may be a bug in the C implementation of stest in the original dmenu repository. The
     /// behavior is reproduced here because this rust implementation strives to be a drop-in
     /// replacement for the original and because it's unlikely that this behavior could
-    /// meaningfully impact the experience of using dmenu_run: non-existing files on your PATH
+    /// meaningfully impact the experience of using fleximenu_run: non-existing files on your PATH
     /// cannot be executed successfully, so it's always reasonable to filter them out.
     #[arg(short = 'e')]
     pub requires_each_file_exists: bool,

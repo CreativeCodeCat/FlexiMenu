@@ -18,7 +18,7 @@
 
 ## Introduction
 
-Developing plugins for dmenu-rs is a relatively simple process. Because this project is still
+Developing plugins for FlexiMenu is a relatively simple process. Because this project is still
 young, only a small part of the internal API is exposed. Raise an issue if you'd like
 something specific exposed, or if instructions here are unclear.
 
@@ -27,7 +27,7 @@ If you write a decent plugin, feel welcome to submit a pull request to have it i
 ## Directory structure
 The basic structure of a plugin is as follows, starting from project root:
 ```
-dmenu-rs
+FlexiMenu
 └─src
   └─plugins
     └─PLUGIN_NAME
@@ -56,7 +56,7 @@ As mentioned above, `config.mk` controls what plugins are loaded. Add your plugi
 Above described is the directory structure of a plugin. A more thorough explanation on each
 is as follows:
 ### plugin.yml
-dmenu-rs configures plugins using YAML. Why YAML and not TOML? Because `clap` uses YAML, and
+FlexiMenu configures plugins using YAML. Why YAML and not TOML? Because `clap` uses YAML, and
 work has not yet been done to change that yet.  
 The structure of a `plugin.yml` file is as follows:
 ```yaml
@@ -95,7 +95,7 @@ Plugins function by overriding certain features. These can be overridden for all
 only when specific flags are called. For more information on syntax, see the 
 [`overrider`](https://docs.rs/overrider/0.6.1/overrider/) crate.
 
-For a list of functions which can be overridden, see the `src/dmenu/plugin_entry.rs` file.  
+For a list of functions which can be overridden, see the `src/fleximenu/plugin_entry.rs` file.  
 Viewing examples of pre-existing plugins will be highly helpful.
 
 ### deps.toml
@@ -114,10 +114,10 @@ provided. If both `help` and `long_help` are provided, `long_help` will be inclu
 in manpage generation.
 
 ## What Functionality Can Be Changed
-Because dmenu-rs is still young, not all functionality is changable yet.
+Because FlexiMenu is still young, not all functionality is changable yet.
 
 For a living list of everything that can be overriden, see
-[the plugin entry](../dmenu/plugin_entry.rs). Every method and funciton here is exposed
+[the plugin entry](../fleximenu/plugin_entry.rs). Every method and funciton here is exposed
 to `overrider`.
 
 Some examples include:
@@ -137,8 +137,8 @@ the phrase `Hello world!`.
 The first thing to do it get a working copy of this repo, and to make sure a clean build
 is working. To do so, either fork and clone or run the following:
 ```
-git clone https://github.com/Shizcow/dmenu-rs/
-cd dmenu-rs
+git clone https://github.com/CreativeCodeCat/FlexiMenu/
+cd FlexiMenu
 ```
 Now, switch to the `develop` branch. This branch has the latest features, so any build
 conflicts will be more easily resolved here:
@@ -227,7 +227,7 @@ pub enum Die {
     Stderr(String),
 }
 ```
-More info can be found in the [result.rs](../dmenu/result.rs) file.
+More info can be found in the [result.rs](../fleximenu/result.rs) file.
 
 The purpose of this type is stopping the program quickly. Be it in error,
 or some reason that requires a quick-exit (such as auto-selection). Most
