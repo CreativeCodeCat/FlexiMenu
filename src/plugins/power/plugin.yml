@@ -1,0 +1,15 @@
+about: |
+  Power menu with icons for locking, logging out, suspending,
+  hibernating, rebooting and shutting down. Pass --power to show it.
+  Uses colored icon boxes when emojihighlight is also compiled in.
+  Commands can be changed in src/plugins/power/main.rs
+entry: main.rs
+
+args:
+  - power:
+      help: Show the power menu
+      long_help: >
+        Show a power menu instead of reading stdin, and run the selected
+        action: lock, logout, suspend, hibernate, reboot or shutdown.
+        Icons need a Nerd Font, such as --fn "FiraCode Nerd Font".
+      long: power
