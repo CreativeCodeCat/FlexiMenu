@@ -140,12 +140,7 @@ is working. To do so, either fork and clone or run the following:
 git clone https://github.com/CreativeCodeCat/FlexiMenu/
 cd FlexiMenu
 ```
-Now, switch to the `develop` branch. This branch has the latest features, so any build
-conflicts will be more easily resolved here:
-```
-git checkout develop
-```
-Finally, make sure you have all the build tools installed:
+Then, make sure you have all the build tools installed:
 ```
 make
 ```
