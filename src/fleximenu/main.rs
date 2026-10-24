@@ -6,11 +6,15 @@ mod fnt;
 mod globals;
 mod init;
 mod item;
+// overrider's macros check cfg names that its build script only sets for
+// the overrides in use, so rustc can't know them all ahead of time
+#[allow(unexpected_cfgs)]
 mod plugin_entry;
 mod result;
 mod run;
 mod setup;
 mod util;
+#[allow(unexpected_cfgs)]
 mod plugins {
     include!(concat!(env!("OUT_DIR"), "/proc_mod_plugin.rs"));
 }

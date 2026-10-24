@@ -5,14 +5,12 @@ use crate::result::*;
 use libc::c_int;
 use regex::Regex;
 
-#[allow(unused_imports)]
 pub enum MatchCode {
     Exact,
     Prefix,
     Substring,
     None,
 }
-pub use MatchCode::*;
 #[derive(Debug)]
 pub enum Direction {
     Vertical,

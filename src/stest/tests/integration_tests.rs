@@ -411,7 +411,10 @@ impl StestResult {
 /// all equivalent.
 /// See: https://users.rust-lang.org/t/help-understanding-io-error-and-lack-of-partialeq/13212/2
 #[derive(Debug)]
-struct IOErrorWithPartialEq(io::Error);
+struct IOErrorWithPartialEq(
+    // Only read through Debug, which shows the error when a test fails
+    #[allow(dead_code)] io::Error,
+);
 
 impl PartialEq for IOErrorWithPartialEq {
     fn eq(&self, _other: &Self) -> bool {
@@ -500,25 +503,6 @@ impl ToFiles for Vec<u8> {
         vec.into_iter()
             .map(|str| PathBuf::from(str))
             .map(|path_buf| File::new(path_buf))
-            .collect()
-    }
-}
-
-trait ToBytes {
-    fn to_bytes(&self) -> Vec<u8>;
-}
-
-impl ToBytes for Vec<File> {
-    fn to_bytes(&self) -> Vec<u8> {
-        self.into_iter()
-            .map(|file| {
-                let mut string = file.to_string();
-                // Note, this appends a newline at the end of the list of files.
-                string.push('\n');
-                string
-            })
-            .map(|string| string.into_bytes())
-            .flatten()
             .collect()
     }
 }
