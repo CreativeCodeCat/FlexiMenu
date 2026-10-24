@@ -1,0 +1,13 @@
+about: |
+  Colored comment lines and emoji highlighting, ported from the dmenu
+  emoji-highlight patch. Enabled by default; pass --nohighlight to disable.
+  Lines starting with > are comments, and >>X colors a comment with X.
+  Lines starting with :X are colored with X when selected, and with
+  :X followed by a space, the next emoji is drawn in a colored box.
+  X is one of r(ed) g(reen) y(ellow) b(lue) p(urple) h(ighlight) s(elected)
+entry: main.rs
+
+args:
+  - nohighlight:
+      help:  Disable emoji highlighting, drawing all items as plain text
+      long:  nohighlight

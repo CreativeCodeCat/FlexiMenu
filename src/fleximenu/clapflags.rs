@@ -3,7 +3,7 @@ use itertools::Itertools;
 use regex::RegexBuilder;
 use yaml_rust::yaml::Yaml;
 
-use crate::config::{Clrs::*, Config, DefaultWidth, Schemes::*};
+use crate::config::{Clrs::*, Config, DefaultWidth, Schemes::*, MINHEIGHT_AUTO};
 use crate::result::*;
 
 lazy_static::lazy_static! {
@@ -80,6 +80,27 @@ pub fn validate(config: &mut Config) -> CompResult<()> {
             .map_err(|_| Die::Stderr("-m: Monitor must be a non-negaitve integer".to_owned()))?;
     }
 
+    // xoffset
+    if let Some(xoffset) = CLAP_FLAGS.value_of("xoffset") {
+        config.xoffset = xoffset.parse::<i32>().map_err(|_| {
+            Die::Stderr("-x: X offset must be an integer number of pixels".to_owned())
+        })?;
+    }
+
+    // yoffset
+    if let Some(yoffset) = CLAP_FLAGS.value_of("yoffset") {
+        config.yoffset = yoffset.parse::<i32>().map_err(|_| {
+            Die::Stderr("-y: Y offset must be an integer number of pixels".to_owned())
+        })?;
+    }
+
+    // width
+    if let Some(width) = CLAP_FLAGS.value_of("width") {
+        config.menu_width = width.parse::<u32>().map_err(|_| {
+            Die::Stderr("-z: Width must be a non-negative integer number of pixels".to_owned())
+        })?;
+    }
+
     // prompt
     if let Some(prompt) = CLAP_FLAGS.value_of("prompt") {
         config.prompt = prompt.to_string();
@@ -150,13 +171,17 @@ pub fn validate(config: &mut Config) -> CompResult<()> {
 
     // render_minheight
     if let Some(minheight) = CLAP_FLAGS.value_of("render_minheight") {
-        config.render_minheight = minheight.parse::<u32>().map_err(|_| {
-            Die::Stderr(
-                "--render_minheight: Height must be an integet number of \
-				  pixels"
-                    .to_owned(),
-            )
-        })?;
+        config.render_minheight = if minheight == "-1" {
+            MINHEIGHT_AUTO
+        } else {
+            minheight.parse::<u32>().map_err(|_| {
+                Die::Stderr(
+                    "-h: Height must be a non-negative integer number of \
+				  pixels, or -1"
+                        .to_owned(),
+                )
+            })?
+        };
     }
 
     // render_overrun

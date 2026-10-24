@@ -11,7 +11,7 @@ use x11::xlib::{
 };
 
 use crate::additional_bindings::xlib::{XNClientWindow, XNFocusWindow, XNInputStyle};
-use crate::config::{Clrs::*, Schemes::*};
+use crate::config::{Clrs::*, Schemes::*, MINHEIGHT_AUTO};
 use crate::drw::Drw;
 use crate::result::*;
 use crate::util::grabfocus;
@@ -37,8 +37,13 @@ impl Drw {
 
             // appearances are set up in constructor
 
-            self.pseudo_globals.bh = (self.fonts.iter().map(|f| f.height).max().unwrap() + 4)
-                .max(self.config.render_minheight);
+            let minheight = if self.config.render_minheight == MINHEIGHT_AUTO {
+                (self.fonts[0].height as f32 * 2.5) as u32
+            } else {
+                self.config.render_minheight
+            };
+            self.pseudo_globals.bh =
+                (self.fonts.iter().map(|f| f.height).max().unwrap() + 4).max(minheight);
             self.h = ((self.config.lines + 1) * self.pseudo_globals.bh) as c_int;
 
             let mut dws: *mut Window = ptr::null_mut();
@@ -132,14 +137,20 @@ impl Drw {
                         }
                     }
                 }
-                x = (*info.offset(i as isize)).x_org as c_int;
+                x = (*info.offset(i as isize)).x_org as c_int + self.config.xoffset;
                 y = (*info.offset(i as isize)).y_org as c_int
                     + (if self.config.topbar {
-                        0
+                        self.config.yoffset
                     } else {
-                        (*info.offset(i as isize)).height as c_int - self.h as c_int
+                        (*info.offset(i as isize)).height as c_int
+                            - self.h as c_int
+                            - self.config.yoffset
                     });
-                self.w = (*info.offset(i as isize)).width as c_int;
+                self.w = if self.config.menu_width > 0 {
+                    self.config.menu_width as c_int
+                } else {
+                    (*info.offset(i as isize)).width as c_int
+                };
                 XFree(info as *mut c_void);
             } else {
                 if XGetWindowAttributes(self.dpy, parentwin, &mut self.wa) == 0 {
@@ -148,13 +159,17 @@ impl Drw {
                         parentwin
                     ));
                 }
-                x = 0;
+                x = self.config.xoffset;
                 y = if self.config.topbar {
-                    0
+                    self.config.yoffset
                 } else {
-                    self.wa.height - self.h as c_int
+                    self.wa.height - self.h as c_int - self.config.yoffset
                 };
-                self.w = self.wa.width;
+                self.w = if self.config.menu_width > 0 {
+                    self.config.menu_width as c_int
+                } else {
+                    self.wa.width
+                };
             }
 
             let mut swa = XSetWindowAttributes {

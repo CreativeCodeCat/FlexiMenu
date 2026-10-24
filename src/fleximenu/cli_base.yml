@@ -33,6 +33,27 @@ args:
       long:  monitor
       takes_value: true
       value_name:  MONITOR
+  - xoffset:
+      help:  Horizontal offset of the menu, in pixels
+      short: x
+      long:  xoffset
+      takes_value: true
+      allow_hyphen_values: true
+      value_name:  PIXELS
+  - yoffset:
+      help:  Vertical offset of the menu, in pixels.
+        Measured from the bottom of the screen with -b
+      short: y
+      long:  yoffset
+      takes_value: true
+      allow_hyphen_values: true
+      value_name:  PIXELS
+  - width:
+      help:  Width of the menu, in pixels. Defaults to the screen width
+      short: z
+      long:  width
+      takes_value: true
+      value_name:  PIXELS
   - prompt:
       help:  Display a prompt
       short: p
@@ -83,9 +104,11 @@ args:
       help: Minimum menu height
       long_help: Minimum menu draw height. Normally, the menu height is decided by the font size,
         however this option overrides that. Useful for getting things aligned with elements always
-        on screen, such as i3 statusbar.
+        on screen, such as i3 statusbar. Pass -1 to use 2.5 times the font height.
+      short: h
       long: render_minheight
       takes_value: true
+      allow_hyphen_values: true
       value_name:  PIXELS
   - render_overrun:
       help: Draw behavior of input box. If specified will draw input

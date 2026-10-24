@@ -19,4 +19,4 @@ CARGOFLAGS =
 
 # space seperated list of plugins to be compiled in
 # run `make plugins` to see a list of available plugins
-PLUGINS = 
+PLUGINS = emojihighlight

@@ -5,6 +5,13 @@ pub enum Schemes {
     SchemeNorm,
     SchemeSel,
     SchemeOut,
+    SchemeHighlight,
+    SchemeHover,
+    SchemeGreen,
+    SchemeRed,
+    SchemeYellow,
+    SchemeBlue,
+    SchemePurple,
     SchemeLast,
 }
 pub enum Clrs {
@@ -13,6 +20,9 @@ pub enum Clrs {
 }
 pub use Clrs::*;
 pub use Schemes::*;
+
+/// render_minheight value for `-h -1`: 2.5 times the font height
+pub const MINHEIGHT_AUTO: u32 = u32::MAX;
 
 #[derive(Debug, PartialEq)]
 pub enum DefaultWidth {
@@ -33,6 +43,9 @@ pub struct Config {
     pub embed: Window,
     pub case_sensitive: bool,
     pub mon: c_int,
+    pub xoffset: c_int,
+    pub yoffset: c_int,
+    pub menu_width: c_uint,
     pub colors: [[[u8; 8]; 2]; SchemeLast as usize],
     pub render_minheight: u32,
     pub render_overrun: bool,
@@ -56,6 +69,9 @@ impl Default for Config {
             embed: ConfigDefault::embed(),
             case_sensitive: ConfigDefault::case_sensitive(),
             mon: ConfigDefault::mon(),
+            xoffset: ConfigDefault::xoffset(),
+            yoffset: ConfigDefault::yoffset(),
+            menu_width: ConfigDefault::menu_width(),
             colors: ConfigDefault::colors(),
             render_minheight: ConfigDefault::render_minheight(),
             render_overrun: ConfigDefault::render_overrun(),

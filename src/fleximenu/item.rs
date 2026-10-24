@@ -236,24 +236,19 @@ impl Items {
         }
 
         for index in 0..matched_partitions[partition].len() {
-            if index == partition_i {
-                drw.setscheme(SchemeSel);
-            } else if matched_partitions[partition][index].out {
-                drw.setscheme(SchemeOut);
-            } else {
-                drw.setscheme(SchemeNorm);
-            }
+            let selected = index == partition_i;
             match direction {
                 Horizontal => {
                     if partition + 1 < matched_partitions.len() {
                         // draw rangle
-                        coord = matched_partitions[partition][index].draw(
+                        coord = drw.draw_item(
+                            &matched_partitions[partition][index],
                             coord,
                             0,
                             matched_partitions[partition][index]
                                 .width
                                 .min(drw.w - coord - rangle_width),
-                            drw,
+                            selected,
                         )?;
                         drw.setscheme(SchemeNorm);
                         drw.text(
@@ -267,18 +262,25 @@ impl Items {
                         )?;
                     } else {
                         // no rangle
-                        coord = matched_partitions[partition][index].draw(
+                        coord = drw.draw_item(
+                            &matched_partitions[partition][index],
                             coord,
                             0,
                             matched_partitions[partition][index]
                                 .width
                                 .min(drw.w - coord),
-                            drw,
+                            selected,
                         )?;
                     }
                 }
                 Vertical => {
-                    matched_partitions[partition][index].draw(0, coord, drw.w, drw)?;
+                    drw.draw_item(
+                        &matched_partitions[partition][index],
+                        0,
+                        coord,
+                        drw.w,
+                        selected,
+                    )?;
                     coord += drw.pseudo_globals.bh as i32;
                 }
             }

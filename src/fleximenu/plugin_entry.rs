@@ -6,6 +6,7 @@ use crate::item::{Item, MatchCode};
 #[allow(unused_imports)]
 use crate::result::*;
 
+use libc::c_int;
 use overrider::*;
 #[allow(unused_imports)]
 use regex::{Regex, RegexBuilder};
@@ -88,6 +89,34 @@ impl Drw {
         }
         Ok(exact)
     }
+
+    /**
+     * How should a single menu item be drawn?
+     *
+     * Args:
+     * - item: the item being drawn
+     * - x, y, w: where to draw it, and how much width it may take up
+     * - selected: is this the currently selected item?
+     *
+     * Returns - x coordinate just past the drawn item
+     */
+    pub fn draw_item(
+        &mut self,
+        item: &Item,
+        x: c_int,
+        y: c_int,
+        w: c_int,
+        selected: bool,
+    ) -> CompResult<c_int> {
+        if selected {
+            self.setscheme(SchemeSel);
+        } else if item.out {
+            self.setscheme(SchemeOut);
+        } else {
+            self.setscheme(SchemeNorm);
+        }
+        item.draw(x, y, w, self)
+    }
 }
 
 /// The following are the default config values, loaded just after program init
@@ -117,12 +146,28 @@ impl ConfigDefault {
     pub fn mon() -> i32 {
         -1
     }
+    pub fn xoffset() -> i32 {
+        0
+    }
+    pub fn yoffset() -> i32 {
+        0
+    }
+    pub fn menu_width() -> u32 {
+        0 // 0 means full screen width
+    }
     pub fn colors() -> [[[u8; 8]; 2]; SchemeLast as usize] {
         /*                         [  fg             bg         ]*/
         let mut arr = [[[0; 8]; 2]; SchemeLast as usize];
         arr[SchemeNorm as usize] = [*b"#bbbbbb\0", *b"#222222\0"];
         arr[SchemeSel as usize] = [*b"#eeeeee\0", *b"#005577\0"];
         arr[SchemeOut as usize] = [*b"#000000\0", *b"#00ffff\0"];
+        arr[SchemeHighlight as usize] = [*b"#f1fa8c\0", *b"#596377\0"];
+        arr[SchemeHover as usize] = [*b"#ffffff\0", *b"#353D4B\0"];
+        arr[SchemeGreen as usize] = [*b"#ffffff\0", *b"#52E067\0"];
+        arr[SchemeRed as usize] = [*b"#ffffff\0", *b"#e05252\0"];
+        arr[SchemeYellow as usize] = [*b"#ffffff\0", *b"#e0c452\0"];
+        arr[SchemeBlue as usize] = [*b"#ffffff\0", *b"#5280e0\0"];
+        arr[SchemePurple as usize] = [*b"#ffffff\0", *b"#9952e0\0"];
         arr
     }
     pub fn nostdin() -> bool {
