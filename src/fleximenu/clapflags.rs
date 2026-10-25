@@ -111,6 +111,15 @@ pub fn validate(config: &mut Config) -> CompResult<()> {
         })?;
     }
 
+    // minwidth
+    if let Some(min_width) = CLAP_FLAGS.value_of("minwidth") {
+        config.min_width = min_width.parse::<u32>().map_err(|_| {
+            Die::Stderr(
+                "--minwidth: Width must be a non-negative integer number of pixels".to_owned(),
+            )
+        })?;
+    }
+
     // prompt
     if let Some(prompt) = CLAP_FLAGS.value_of("prompt") {
         config.prompt = prompt.to_string();
