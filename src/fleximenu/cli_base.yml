@@ -15,12 +15,12 @@ args:
       long:  bottom
   - center:
       help:  Centers the menu on the screen, only as wide as its items
-        (at least 500 pixels, see --minwidth). Use -z to set the width instead
+        (at least 150 pixels, see --minwidth). Use -z to set the width instead
       short: c
       long:  center
   - mouse:
       help:  Opens the menu at the mouse pointer, only as wide as its items
-        (at least 500 pixels, see --minwidth). Use -z to set the width instead
+        (at least 150 pixels, see --minwidth). Use -z to set the width instead
       short: M
       long:  mouse
       conflicts_with: center
@@ -67,7 +67,7 @@ args:
       value_name:  PIXELS
   - minwidth:
       help:  Smallest width, in pixels, of a -c or -M menu sized to its
-        items (default 500). 0 makes it exactly as wide as its widest item
+        items (default 150). 0 makes it exactly as wide as its widest item
       long:  minwidth
       takes_value: true
       value_name:  PIXELS
