@@ -1,61 +1,63 @@
-# FlexiMenu - dynamic menu
-FlexiMenu is an efficient dynamic menu for X.  
-It is a 1:1 port of dmenu rewritten in Rust. It looks, feels, and
-runs pixel-for-pixel exactly the same.  
-It also has plugin support for easy modification.  
-FlexiMenu is a fork of [dmenu-rs](https://github.com/Shizcow/dmenu-rs) by Shizcow.
+# FlexiMenu
 
-## State of the project
-The main branch is a stable, feature complete product. It it not unmaintained; it's finished.
+A dynamic menu for X, written in Rust. It reads newline-separated items
+on stdin, narrows them as you type, and prints the one you pick, so it
+works anywhere a dmenu-style menu does. Plugins add new behavior, such
+as a calculator or a power menu.
 
-There is a __small__ and ever-shrinking chance that this will be updated or overhauled in the distant future. It is much more likely that I will write a spiritual successor from scratch, but that won't happen until at least 2023.
+## Features
 
-## Why Rust?
-### Inspiration
-This project started with [`dmenu-calc`](https://github.com/sumnerevans/menu-calc).
-Initially, I wanted much more function than what is provided by `bc`. However, I
-found the bottleneck to be a lack of functionality and modability in `dmenu(1)`
-itself. So, the choice I had was to either mod `dmenu(1)` or rewrite it. Because
-dmenu source is horrendously annoying to read, I decided to rewrite it in a
-language which lends itself to writing code that is easier to modify. There are
-other languages for this, but I like Rust.
-### Improvements
-As mentioned earlier, FlexiMenu runs exactly the same as `dmenu`. However, there
-are some significant performance enhancements under the hood. The most impactful
-is memory usage: FlexiMenu uses 21.65% less memory<sup>[1]</sup>, while managing it much
-more safely **without** any performance impacts. The other large improvement is
-plugin support; read below.
-
-## Plugins
-FlexiMenu leverages rust crates `overrider` and `proc_use` to provide an easy to
-write and powerful plugin system. The end-result are plugins which are dead-simple
-to enable.  
-For a list of available plugins and more info on
-enabling plugins, run `make plugins`.  
-For more info on developing plugins, read the [plugin guide](src/plugins/README.md).
+- **Placement**: a bar along the top or bottom of the screen (`-b`),
+  centered (`-c`), or at the mouse pointer (`-M`). Centered and pointer
+  menus are as wide as their items; `-z` sets an exact width and
+  `--minwidth` the smallest one.
+- **Vertical lists** with `-l`, and taller rows with `-h`.
+- **Colored icon boxes**: an item starting with `:r `, `:g `, `:y `,
+  `:b `, `:p `, `:h ` or `:s ` has its icon boxed in that color while
+  it's selected (the `emojihighlight` plugin).
+- **Power menu**: `--power` shows lock, logout, suspend, hibernate,
+  reboot and shutdown, and runs the one you pick.
+- **Plugins** for fuzzy matching, a calculator, spell checking,
+  password entry and more, chosen at build time.
 
 ## Requirements
-- Xlib header files  
-- Cargo / rustc  
-- A working C compiler
 
-## Installation
-### Standalone
-Edit config.mk to match your local setup (fleximenu is installed into
-the /usr/local namespace by default).
+- Xlib headers
+- A Rust toolchain (cargo and rustc)
+- A C compiler
 
-Afterwards enter the following command to build fleximenu:  
-```make```  
-Then, to install (if necessary as root):  
-```make install```
-### Distros
-FlexiMenu is not packaged for any distro yet. If you'd like for it to be
-available on your distro, raise an issue or submit a pull request with a
-README change pointing to the released package.
+## Build and install
 
-## Running FlexiMenu
-See the man page for details. For a quick test, run:  
-```make test```
+Edit `config.mk` for your system if needed. It installs under
+`/usr/local` by default and enables the `emojihighlight` and `power`
+plugins. Then:
 
-<br/><br/>
-<sup>[1]</sup>: According to `valgrind(1)`
+```sh
+make
+sudo make install
+```
+
+This installs `fleximenu`, the `fleximenu_run` launcher and its
+`fleximenu_path` helper, `stest`, and the `fleximenu` and `stest` man
+pages.
+
+## Usage
+
+```sh
+printf 'one\ntwo\nthree\n' | fleximenu -l 3 -p 'Pick:'
+fleximenu_run                 # pick a program from $PATH and run it
+fleximenu --power -c          # centered power menu
+```
+
+`man fleximenu` lists every option, and `make test` opens a quick test
+menu.
+
+## Plugins
+
+Plugins are set with `PLUGINS` in `config.mk`. Run `make plugins` to
+list the available ones and what they do, and see the
+[plugin guide](src/plugins/README.md) to write your own.
+
+## License
+
+GPL-3.0; see [LICENSE](LICENSE).
