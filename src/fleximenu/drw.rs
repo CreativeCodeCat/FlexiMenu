@@ -14,7 +14,8 @@ use x11::xft::{
 use x11::xlib::{
     AnyKey, AnyModifier, Display, Drawable, False, Window, XCloseDisplay, XCopyArea,
     XDefaultColormap, XDefaultVisual, XDrawRectangle, XFillRectangle, XFreeGC, XFreePixmap,
-    XSetForeground, XSync, XUngrabKey, XWindowAttributes, GC,
+    XSetForeground, XSync, XUngrabKey, XWindowAttributes, GC, XGetImage, XAllPlanes, ZPixmap,
+    XDestroyImage,
 };
 use x11::xrender::XGlyphInfo;
 
@@ -354,6 +355,9 @@ impl Drw {
     }
 
     pub fn map(&self, win: Window, x: c_int, y: c_int, w: c_int, h: c_int) {
+        if crate::wayland::active() {
+            return self.present();
+        }
         unsafe {
             XCopyArea(
                 self.dpy,
@@ -368,6 +372,36 @@ impl Drw {
                 y,
             );
             XSync(self.dpy, False);
+        }
+    }
+
+    /// Copy the drawn menu out of its pixmap into the Wayland surface.
+    fn present(&self) {
+        if self.w <= 0 || self.h <= 0 {
+            return;
+        }
+        unsafe {
+            let image = XGetImage(
+                self.dpy,
+                self.drawable,
+                0,
+                0,
+                self.w as u32,
+                self.h as u32,
+                XAllPlanes(),
+                ZPixmap,
+            );
+            if image.is_null() {
+                return;
+            }
+            let stride = (*image).bytes_per_line as usize;
+            let data = std::slice::from_raw_parts((*image).data as *const u8, stride * self.h as usize);
+            crate::wayland::WL.with(|wl| {
+                if let Some(wl) = wl.borrow_mut().as_mut() {
+                    wl.present(data, self.w, self.h, stride);
+                }
+            });
+            XDestroyImage(image);
         }
     }
 

@@ -112,6 +112,27 @@ impl Drw {
         }
     }
 
+    /// Place the menu's layer surface in the output's free area the way
+    /// `setup` places its X window on a screen
+    fn setup_wayland(&mut self) -> CompResult<()> {
+        use crate::wayland::{pointer_position, WL};
+        let (area_w, area_h) = WL.with(|wl| wl.borrow().as_ref().unwrap().area());
+        let mouse = if self.config.mouse {
+            // without flexiflow-river to ask, a --mouse menu is centered
+            let at = pointer_position();
+            if at.is_none() {
+                self.config.center = true;
+            }
+            at
+        } else {
+            None
+        };
+        let (x, y) = self.place(0, 0, area_w, area_h, mouse)?;
+        let (w, h) = (self.w, self.h);
+        WL.with(|wl| wl.borrow_mut().as_mut().unwrap().place(x, y, w, h))?;
+        self.draw()
+    }
+
     pub fn setup(&mut self, parentwin: u64, root: u64) -> CompResult<()> {
         unsafe {
             let mut x: c_int;
@@ -132,6 +153,10 @@ impl Drw {
             self.pseudo_globals.bh =
                 (self.fonts.iter().map(|f| f.height).max().unwrap() + 4).max(minheight);
             self.h = ((self.config.lines + 1) * self.pseudo_globals.bh) as c_int;
+
+            if crate::wayland::active() {
+                return self.setup_wayland();
+            }
 
             let mouse = if self.config.mouse {
                 pointer_position(self.dpy, parentwin)

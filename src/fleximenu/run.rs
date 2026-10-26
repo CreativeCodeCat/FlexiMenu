@@ -18,6 +18,9 @@ use crate::util::grabfocus;
 #[allow(non_upper_case_globals)]
 impl Drw {
     pub fn run(&mut self) -> CompResult<()> {
+        if crate::wayland::active() {
+            return self.run_wayland();
+        }
         unsafe {
             let utf8 = XInternAtom(self.dpy, "UTF8_STRING\0".as_ptr() as *mut c_char, False);
             let mut ev: XEvent = MaybeUninit::uninit().assume_init();
@@ -71,7 +74,6 @@ impl Drw {
 
     fn keypress(&mut self, mut ev: XKeyEvent) -> CompResult<bool> {
         // bool - should exit?
-        use x11::keysym::*;
         unsafe {
             let buf: [u8; 32] = [0; 32];
             let mut __ksym = MaybeUninit::<c_ulong>::uninit();
@@ -84,7 +86,7 @@ impl Drw {
                 __ksym.as_mut_ptr(),
                 status.as_mut_ptr(),
             );
-            let mut ksym = __ksym.assume_init() as u32;
+            let ksym = __ksym.assume_init() as u32;
             match status.assume_init() {
                 XLookupChars => {
                     if iscntrl(*(buf.as_ptr() as *mut i32)) == 0 {
@@ -94,10 +96,48 @@ impl Drw {
                 XLookupKeySym | XLookupBoth => {}
                 _ => return Ok(false), /* XLookupNone, XBufferOverflow */
             }
+            self.key(ksym, buf, len, ev.state)
+        }
+    }
+
+    /// The Wayland event loop: the same keys, clicks and pointer motion
+    /// as `run`, from the layer surface in wayland.rs
+    fn run_wayland(&mut self) -> CompResult<()> {
+        use crate::wayland::{Input, WL};
+        loop {
+            let inputs = WL.with(|wl| wl.borrow_mut().as_mut().unwrap().next())?;
+            for input in inputs {
+                let exit = match input {
+                    Input::Key { sym, text, state } => {
+                        let mut buf = [0u8; 32];
+                        let bytes = text.as_bytes();
+                        let len = bytes.len().min(buf.len());
+                        buf[..len].copy_from_slice(&bytes[..len]);
+                        self.key(sym, buf, len as i32, state)?
+                    }
+                    Input::Button { button, x, y, state } => self.button(button, x, y, state)?,
+                    Input::Motion { x, y } => {
+                        self.motion_at(x, y)?;
+                        false
+                    }
+                };
+                if exit {
+                    return Ok(());
+                }
+            }
+        }
+    }
+
+    /// A key, after X's or xkbcommon's lookup: Emacs-style Ctrl and Alt
+    /// bindings first, then everything else
+    fn key(&mut self, mut ksym: u32, buf: [u8; 32], len: i32, mut state: u32) -> CompResult<bool> {
+        // bool - should exit?
+        use x11::keysym::*;
+        {
             const control: bool = true;
             const mod1: bool = false;
-            if (ev.state & ControlMask) != 0 || (ev.state & Mod1Mask) != 0 {
-                match (ksym, (ev.state & ControlMask) != 0) {
+            if (state & ControlMask) != 0 || (state & Mod1Mask) != 0 {
+                match (ksym, (state & ControlMask) != 0) {
                     (XK_a, control) | (XK_g, mod1) => ksym = XK_Home,
                     (XK_b, control) => ksym = XK_Left,
                     (XK_c, control) => ksym = XK_Escape,
@@ -113,7 +153,7 @@ impl Drw {
                     (XK_p, control) | (XK_h, mod1) => ksym = XK_Up,
                     (XK_j, control) | (XK_J, control) | (XK_m, control) | (XK_M, control) => {
                         ksym = XK_Return;
-                        ev.state &= !ControlMask;
+                        state &= !ControlMask;
                     }
                     (XK_k, control) => {
                         // delete all to the left
@@ -232,7 +272,7 @@ impl Drw {
                     _ => return Ok(false),
                 }
             }
-            self.keyprocess(ksym, buf, len, ev.state)
+            self.keyprocess(ksym, buf, len, state)
         }
     }
 
@@ -248,19 +288,23 @@ impl Drw {
     }
 
     fn buttonpress(&mut self, ev: XButtonEvent) -> CompResult<bool> {
-        // bool - should exit?
-        // Each button does the same as a key, so they behave alike
-        use x11::keysym::*;
         if ev.window != self.pseudo_globals.win {
             return Ok(false);
         }
+        self.button(ev.button, ev.x, ev.y, ev.state)
+    }
+
+    fn button(&mut self, button: u32, x: c_int, y: c_int, state: u32) -> CompResult<bool> {
+        // bool - should exit?
+        // Each button does the same as a key, so they behave alike
+        use x11::keysym::*;
         let nobuf = [0; 32];
-        match ev.button {
-            Button1 => match self.click_at(ev.x, ev.y) {
+        match button {
+            Button1 => match self.click_at(x, y) {
                 Some(Click::Item(index)) => {
                     // like Enter; Ctrl-click like Ctrl-Enter keeps the menu open
                     self.items.as_mut().unwrap().curr = index;
-                    self.keyprocess(XK_Return, nobuf, 0, ev.state & ControlMask)
+                    self.keyprocess(XK_Return, nobuf, 0, state & ControlMask)
                 }
                 Some(Click::PrevPage) => self.keyprocess(XK_Prior, nobuf, 0, 0),
                 Some(Click::NextPage) => self.keyprocess(XK_Next, nobuf, 0, 0),
@@ -279,7 +323,11 @@ impl Drw {
         if ev.window != self.pseudo_globals.win {
             return Ok(());
         }
-        match self.click_at(ev.x, ev.y) {
+        self.motion_at(ev.x, ev.y)
+    }
+
+    fn motion_at(&mut self, x: c_int, y: c_int) -> CompResult<()> {
+        match self.click_at(x, y) {
             Some(Click::Item(index)) if index != self.items.as_ref().unwrap().curr => {
                 self.items.as_mut().unwrap().curr = index;
                 self.draw()

@@ -38,7 +38,8 @@ pub fn make_items(drw: &mut Drw, lines: Vec<String>) -> CompResult<Vec<Item>> {
 pub fn grabkeyboard(dpy: *mut Display, embed: Window) -> CompResult<()> {
     let ts = Duration::from_millis(1);
 
-    if embed != 0 {
+    // on Wayland the layer surface gets the keyboard instead
+    if embed != 0 || crate::wayland::active() {
         return Ok(());
     }
     /* try to grab keyboard, we may have to wait for another process to ungrab */

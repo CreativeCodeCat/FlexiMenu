@@ -14,6 +14,7 @@ mod result;
 mod run;
 mod setup;
 mod util;
+mod wayland;
 #[allow(unexpected_cfgs)]
 mod plugins {
     include!(concat!(env!("OUT_DIR"), "/proc_mod_plugin.rs"));
@@ -59,6 +60,15 @@ fn try_main() -> CompResult<()> {
     unsafe {
         if setlocale(LC_CTYPE, ptr::null()) == ptr::null_mut() || XSupportsLocale() == 0 {
             return Die::stderr("warning: no locale support".to_owned());
+        }
+        // before anything grabs the X keyboard, which Wayland ignores
+        if wayland::wanted() && config.embed == 0 {
+            match wayland::Wayland::connect() {
+                Ok(wl) => wayland::WL.with(|w| *w.borrow_mut() = Some(wl)),
+                Err(Die::Stderr(e)) | Err(Die::Stdout(e)) => {
+                    eprintln!("{}; falling back to X11", e)
+                }
+            }
         }
         let dpy = XOpenDisplay(ptr::null_mut());
         if dpy == ptr::null_mut() {
