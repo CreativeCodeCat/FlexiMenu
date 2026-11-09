@@ -40,6 +40,9 @@ enum Action {
     Watch,
     /// delete the whole history
     Clear,
+    /// add stdin to history; `watch` runs this on Wayland
+    #[command(hide = true)]
+    Record,
 }
 
 fn main() -> ExitCode {
@@ -59,8 +62,8 @@ fn run(action: Action) -> io::Result<()> {
             ensure_history(&path)?;
             // record the real clipboard (what Ctrl+C copies) before the
             // primary selection overwrites it, then record the selection
-            let clipboard = xclip_output(&["-o", "-selection", "clipboard"]).unwrap_or_default();
-            let primary = xclip_output(&["-o", "-selection", "primary"]).unwrap_or_default();
+            let clipboard = read_clipboard(false).unwrap_or_default();
+            let primary = read_clipboard(true).unwrap_or_default();
             let from_clipboard = record(&path, &clipboard)?;
             let from_primary = record(&path, &primary)?;
             if !primary.trim_end_matches('\n').is_empty() {
@@ -86,6 +89,12 @@ fn run(action: Action) -> io::Result<()> {
             }
             fs::write(&path, "")?;
             Some("Clipboard history cleared".to_string())
+        }
+        Action::Record => {
+            ensure_history(&path)?;
+            let mut bytes = Vec::new();
+            io::stdin().read_to_end(&mut bytes)?;
+            record(&path, &String::from_utf8_lossy(&bytes))?
         }
     };
     if let Some(message) = notification {
@@ -174,10 +183,34 @@ fn select(path: &Path) -> io::Result<Option<String>> {
     Ok(Some("Copied to clipboard!".to_string()))
 }
 
-/// Waits for the clipboard's owner to change (XFixes), and records each new
-/// clipboard contents. Runs until the X connection ends.
+/// Records every clipboard change, until the watcher stops
 fn watch(path: &Path) -> io::Result<()> {
     ensure_history(path)?;
+    if on_wayland() {
+        watch_wayland()
+    } else {
+        watch_x11(path)
+    }
+}
+
+/// Wayland has no XFixes, so wl-paste runs `record` on each change
+fn watch_wayland() -> io::Result<()> {
+    let exe = env::current_exe()?;
+    let status = Command::new("wl-paste")
+        .args(["--type", "text", "--watch"])
+        .arg(exe)
+        .arg("record")
+        .status()?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(io::Error::other("wl-paste --watch stopped"))
+    }
+}
+
+/// Waits for the clipboard's owner to change (XFixes), and records each new
+/// clipboard contents. Runs until the X connection ends.
+fn watch_x11(path: &Path) -> io::Result<()> {
     unsafe {
         let dpy = XOpenDisplay(null());
         if dpy.is_null() {
@@ -223,6 +256,31 @@ fn screen_width() -> Option<c_int> {
     }
 }
 
+/// Under a Wayland session (dwl, sway, ...) the wl-clipboard tools are used
+/// directly; otherwise the X tools are used, through XWayland or a plain X server
+fn on_wayland() -> bool {
+    env::var_os("WAYLAND_DISPLAY").is_some()
+}
+
+/// Reads the clipboard, or the primary selection if `primary` is set
+fn read_clipboard(primary: bool) -> io::Result<String> {
+    if on_wayland() {
+        let mut command = Command::new("wl-paste");
+        command.arg("--no-newline");
+        if primary {
+            command.arg("--primary");
+        }
+        let output = command.stderr(Stdio::null()).output()?;
+        if !output.status.success() {
+            return Err(io::Error::other("wl-paste failed to read the selection"));
+        }
+        Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+    } else {
+        let selection = if primary { "primary" } else { "clipboard" };
+        xclip_output(&["-o", "-selection", selection])
+    }
+}
+
 /// Runs `xclip` with the given arguments and returns what it printed
 fn xclip_output(args: &[&str]) -> io::Result<String> {
     let output = Command::new("xclip")
@@ -235,10 +293,16 @@ fn xclip_output(args: &[&str]) -> io::Result<String> {
     Ok(String::from_utf8_lossy(&output.stdout).into_owned())
 }
 
-/// Puts `text` on the clipboard. xclip forks to keep serving it, so the parent exits quickly
+/// Puts `text` on the clipboard. xclip and wl-copy fork to keep serving it,
+/// so the parent exits quickly
 fn set_clipboard(text: &str) -> io::Result<()> {
-    let mut child = Command::new("xclip")
-        .args(["-i", "-selection", "clipboard"])
+    let (program, args): (&str, &[&str]) = if on_wayland() {
+        ("wl-copy", &[])
+    } else {
+        ("xclip", &["-i", "-selection", "clipboard"])
+    };
+    let mut child = Command::new(program)
+        .args(args)
         .stdin(Stdio::piped())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
@@ -247,7 +311,9 @@ fn set_clipboard(text: &str) -> io::Result<()> {
         stdin.write_all(text.as_bytes())?;
     }
     if !child.wait()?.success() {
-        return Err(io::Error::other("xclip failed to set the clipboard"));
+        return Err(io::Error::other(format!(
+            "{program} failed to set the clipboard"
+        )));
     }
     Ok(())
 }
