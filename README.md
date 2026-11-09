@@ -38,8 +38,8 @@ sudo make install
 ```
 
 This installs `fleximenu`, the `fleximenu_run` launcher and its
-`fleximenu_path` helper, `stest`, and the `fleximenu` and `stest` man
-pages.
+`fleximenu_path` helper, `fleximenu_clip` (clipboard history, needs `xclip`),
+`stest`, and the `fleximenu` and `stest` man pages.
 
 ## Usage
 

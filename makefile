@@ -19,7 +19,7 @@ export XINERAMA
 export depcheck
 export CC
 
-all:	options fleximenu stest
+all:	options fleximenu stest clip
 
 options:
 	@echo "fleximenu ($(VERSION)) build options:"
@@ -56,6 +56,10 @@ stest:
 	cp src/target/release/stest target/
 	cp src/man/src/stest.1 target/
 
+clip:
+	cd src && cargo build -p fleximenu_clip --release $(CARGOFLAGS)
+	cp src/target/release/fleximenu_clip target/
+
 scaffold:
 	mkdir -p target
 	mkdir -p target/build
@@ -91,8 +95,9 @@ dist:
 # may need sudo
 install:	all
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
-	cp -f target/fleximenu src/sh/fleximenu_path src/sh/fleximenu_run target/stest $(DESTDIR)$(PREFIX)/bin/
+	cp -f target/fleximenu target/fleximenu_clip src/sh/fleximenu_path src/sh/fleximenu_run target/stest $(DESTDIR)$(PREFIX)/bin/
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/fleximenu
+	chmod 755 $(DESTDIR)$(PREFIX)/bin/fleximenu_clip
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/fleximenu_path
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/fleximenu_run
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/stest
@@ -104,6 +109,7 @@ install:	all
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/fleximenu\
+		$(DESTDIR)$(PREFIX)/bin/fleximenu_clip\
 		$(DESTDIR)$(PREFIX)/bin/fleximenu_path\
 		$(DESTDIR)$(PREFIX)/bin/fleximenu_run\
 		$(DESTDIR)$(PREFIX)/bin/stest\

@@ -3,6 +3,7 @@ resolver = "1"
 
 members = [
         "build",
+        "clip",
         "config",
         "headers",
         "stest"
