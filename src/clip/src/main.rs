@@ -1,12 +1,24 @@
 use clap::{Parser, Subcommand};
 use std::env;
+use std::ffi::{c_int, c_ulong, CString};
 use std::fs::{self, OpenOptions};
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode, Stdio};
+use std::ptr::null;
+use x11::xfixes::{XFixesQueryExtension, XFixesSelectSelectionInput};
+use x11::xlib::{
+    self, False, XCreateSimpleWindow, XDefaultRootWindow, XEvent, XInternAtom, XNextEvent,
+    XOpenDisplay,
+};
 
 /// Stands in for newlines so that every history entry fits on a single line
 const PLACEHOLDER: &str = "<NEWLINE>";
+
+/// XFixesSetSelectionOwnerNotifyMask: report whenever the selection's owner changes
+const SET_SELECTION_OWNER_NOTIFY_MASK: c_ulong = 1;
+/// XFixes reports its selection change as its first event after the extension's base
+const SELECTION_NOTIFY: c_int = 0;
 
 /// Clipboard history, picked from with fleximenu
 #[derive(Parser)]
@@ -24,6 +36,8 @@ enum Action {
     Out,
     /// pick from history with fleximenu, and copy the choice to the clipboard
     Sel,
+    /// run in the background, adding every change to the clipboard to history
+    Watch,
 }
 
 fn main() -> ExitCode {
@@ -41,9 +55,16 @@ fn run(action: Action) -> io::Result<()> {
     let notification = match action {
         Action::Add => {
             ensure_history(&path)?;
-            let text = xclip_output(&["-o", "-selection", "primary"])?;
-            set_clipboard(&text)?;
-            record(&path, &text)?
+            // record the real clipboard (what Ctrl+C copies) before the
+            // primary selection overwrites it, then record the selection
+            let clipboard = xclip_output(&["-o", "-selection", "clipboard"]).unwrap_or_default();
+            let primary = xclip_output(&["-o", "-selection", "primary"]).unwrap_or_default();
+            let from_clipboard = record(&path, &clipboard)?;
+            let from_primary = record(&path, &primary)?;
+            if !primary.trim_end_matches('\n').is_empty() {
+                set_clipboard(&primary)?;
+            }
+            from_primary.or(from_clipboard)
         }
         Action::Out => {
             ensure_history(&path)?;
@@ -53,6 +74,10 @@ fn run(action: Action) -> io::Result<()> {
             record(&path, &text)?
         }
         Action::Sel => select(&path)?,
+        Action::Watch => {
+            watch(&path)?;
+            None
+        }
     };
     if let Some(message) = notification {
         notify(&message);
@@ -122,6 +147,42 @@ fn select(path: &Path) -> io::Result<Option<String>> {
     }
     set_clipboard(&selection.replace(PLACEHOLDER, "\n"))?;
     Ok(Some("Copied to clipboard!".to_string()))
+}
+
+/// Waits for the clipboard's owner to change (XFixes), and records each new
+/// clipboard contents. Runs until the X connection ends.
+fn watch(path: &Path) -> io::Result<()> {
+    ensure_history(path)?;
+    unsafe {
+        let dpy = XOpenDisplay(null());
+        if dpy.is_null() {
+            return Err(io::Error::other("cannot open the X display"));
+        }
+        let root = XDefaultRootWindow(dpy);
+        // XFixes events are selected on a window of our own, not the root
+        let window = XCreateSimpleWindow(dpy, root, 0, 0, 1, 1, 0, 0, 0);
+        let name = CString::new("CLIPBOARD").expect("no NUL in CLIPBOARD");
+        let clipboard = XInternAtom(dpy, name.as_ptr(), False);
+
+        let (mut event_base, mut error_base): (c_int, c_int) = (0, 0);
+        if XFixesQueryExtension(dpy, &mut event_base, &mut error_base) == 0 {
+            xlib::XCloseDisplay(dpy);
+            return Err(io::Error::other("the X server has no XFixes extension"));
+        }
+        XFixesSelectSelectionInput(dpy, window, clipboard, SET_SELECTION_OWNER_NOTIFY_MASK);
+
+        loop {
+            let mut event: XEvent = std::mem::zeroed();
+            XNextEvent(dpy, &mut event);
+            if event.get_type() == event_base + SELECTION_NOTIFY {
+                // the owner may have cleared the clipboard, which is nothing to record
+                let text = xclip_output(&["-o", "-selection", "clipboard"]).unwrap_or_default();
+                if let Err(err) = record(path, &text) {
+                    eprintln!("fleximenu_clip: could not write history: {err}");
+                }
+            }
+        }
+    }
 }
 
 /// Runs `xclip` with the given arguments and returns what it printed
