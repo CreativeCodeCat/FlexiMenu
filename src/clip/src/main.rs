@@ -38,6 +38,8 @@ enum Action {
     Sel,
     /// run in the background, adding every change to the clipboard to history
     Watch,
+    /// delete the whole history
+    Clear,
 }
 
 fn main() -> ExitCode {
@@ -77,6 +79,13 @@ fn run(action: Action) -> io::Result<()> {
         Action::Watch => {
             watch(&path)?;
             None
+        }
+        Action::Clear => {
+            if let Some(dir) = path.parent() {
+                fs::create_dir_all(dir)?;
+            }
+            fs::write(&path, "")?;
+            Some("Clipboard history cleared".to_string())
         }
     };
     if let Some(message) = notification {
@@ -129,11 +138,21 @@ fn select(path: &Path) -> io::Result<Option<String>> {
         .map(|line| format!("{line}\n"))
         .collect();
 
-    // fleximenu has no maximum width, so cap it at half the screen with -z
-    let mut args = vec!["-c", "-l", "5", "-i", "-p", "Clipboard history:"];
+    // centered and only as wide as the entries (no 150px minimum), but never
+    // wider than half the screen
+    let mut args = vec![
+        "-c",
+        "-l",
+        "5",
+        "-i",
+        "-p",
+        "Clipboard history:",
+        "--minwidth",
+        "0",
+    ];
     let half_width = screen_width().map(|w| (w / 2).to_string());
     if let Some(width) = &half_width {
-        args.extend(["-z", width]);
+        args.extend(["--maxwidth", width]);
     }
     let mut child = Command::new("fleximenu")
         .args(&args)
