@@ -8,8 +8,8 @@ use std::process::{Command, ExitCode, Stdio};
 use std::ptr::null;
 use x11::xfixes::{XFixesQueryExtension, XFixesSelectSelectionInput};
 use x11::xlib::{
-    self, False, XCreateSimpleWindow, XDefaultRootWindow, XEvent, XInternAtom, XNextEvent,
-    XOpenDisplay,
+    self, False, XCreateSimpleWindow, XDefaultRootWindow, XDefaultScreen, XDisplayWidth, XEvent,
+    XInternAtom, XNextEvent, XOpenDisplay,
 };
 
 /// Stands in for newlines so that every history entry fits on a single line
@@ -129,8 +129,14 @@ fn select(path: &Path) -> io::Result<Option<String>> {
         .map(|line| format!("{line}\n"))
         .collect();
 
+    // fleximenu has no maximum width, so cap it at half the screen with -z
+    let mut args = vec!["-c", "-l", "5", "-i", "-p", "Clipboard history:"];
+    let half_width = screen_width().map(|w| (w / 2).to_string());
+    if let Some(width) = &half_width {
+        args.extend(["-z", width]);
+    }
     let mut child = Command::new("fleximenu")
-        .args(["-c", "-l", "5", "-i", "-p", "Clipboard history:"])
+        .args(&args)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()?;
@@ -182,6 +188,19 @@ fn watch(path: &Path) -> io::Result<()> {
                 }
             }
         }
+    }
+}
+
+/// Width of the X screen in pixels, or None if there is no display
+fn screen_width() -> Option<c_int> {
+    unsafe {
+        let dpy = XOpenDisplay(null());
+        if dpy.is_null() {
+            return None;
+        }
+        let width = XDisplayWidth(dpy, XDefaultScreen(dpy));
+        xlib::XCloseDisplay(dpy);
+        Some(width)
     }
 }
 
