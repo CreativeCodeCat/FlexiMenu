@@ -16,12 +16,16 @@ lazy_static::lazy_static! {
     pub static ref CLAP_FLAGS: ArgMatches<'static> = App::from_yaml(&YAML).get_matches();
 }
 
+fn version() -> String {
+    std::env::var("VERSION").unwrap_or_else(|_| "unknown".to_string())
+}
+
 pub fn validate(config: &mut Config) -> CompResult<()> {
     if CLAP_FLAGS.occurrences_of("version") > 2 {
         eprintln!("More than 2 version flags do nothing special");
     }
     if CLAP_FLAGS.occurrences_of("version") == 1 {
-        return Die::stdout(format!("FlexiMenu {}", env!("VERSION")));
+        return Die::stdout(format!("FlexiMenu {}", version()));
     }
     if CLAP_FLAGS.occurrences_of("version") >= 2 {
         let plugins = env!("PLUGINS");
@@ -30,7 +34,7 @@ pub fn validate(config: &mut Config) -> CompResult<()> {
                 "FlexiMenu {}\n\
 					Compiled with rustc {}\n\
 					Compiled without plugins",
-                env!("VERSION"),
+                version(),
                 rustc_version_runtime::version(),
             ));
         } else {
@@ -39,7 +43,7 @@ pub fn validate(config: &mut Config) -> CompResult<()> {
 					Compiled with rustc {}\n\
 					Compiled with plugins:\n\
 					{}",
-                env!("VERSION"),
+                version(),
                 rustc_version_runtime::version(),
                 plugins.split(" ").map(|p| format!("- {}", p)).join("\n"),
             ));

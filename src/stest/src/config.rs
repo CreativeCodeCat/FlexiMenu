@@ -7,7 +7,7 @@ use clap::Parser;
 /// which pass all tests are printed to stdout. If no files are given, stest reads files from
 /// stdin.
 #[derive(Clone, Debug, Parser)]
-#[command(author, version = env!("VERSION"), about, long_about)]
+#[command(author, about, long_about)]
 pub struct Config {
     /// Test hidden files.
     #[arg(short = 'a')]
