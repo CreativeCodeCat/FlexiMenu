@@ -1,0 +1,8 @@
+[package]
+name = "fleximenu_clip"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.1.8", features = ["derive"] }
+notify-rust = "4"
