@@ -124,6 +124,15 @@ pub fn validate(config: &mut Config) -> CompResult<()> {
         })?;
     }
 
+    // maxwidth
+    if let Some(max_width) = CLAP_FLAGS.value_of("maxwidth") {
+        config.max_width = max_width.parse::<u32>().map_err(|_| {
+            Die::Stderr(
+                "--maxwidth: Width must be a non-negative integer number of pixels".to_owned(),
+            )
+        })?;
+    }
+
     // prompt
     if let Some(prompt) = CLAP_FLAGS.value_of("prompt") {
         config.prompt = prompt.to_string();

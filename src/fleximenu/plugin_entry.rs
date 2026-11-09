@@ -138,6 +138,9 @@ impl ConfigDefault {
     pub fn min_width() -> u32 {
         150 // smallest width of a centered or mouse menu
     }
+    pub fn max_width() -> u32 {
+        0 // no largest width for a centered or mouse menu (0 means no limit)
+    }
     pub fn prompt() -> String {
         String::new()
     }

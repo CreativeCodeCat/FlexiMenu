@@ -71,6 +71,12 @@ args:
       long:  minwidth
       takes_value: true
       value_name:  PIXELS
+  - maxwidth:
+      help:  Largest width, in pixels, of a -c or -M menu sized to its
+        items. Has no effect with -z
+      long:  maxwidth
+      takes_value: true
+      value_name:  PIXELS
   - prompt:
       help:  Display a prompt
       short: p

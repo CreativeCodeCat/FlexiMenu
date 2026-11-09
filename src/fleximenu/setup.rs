@@ -51,7 +51,8 @@ fn pointer_position(dpy: *mut Display, win: Window) -> Option<(c_int, c_int)> {
 
 impl Drw {
     /// Width of a menu that isn't a full screen bar: as wide as the widest
-    /// item and prompt, but no smaller than min_width, unless -z gives a width
+    /// item, but at least as wide as the prompt, and no smaller than
+    /// min_width and no larger than max_width (if set), unless -z gives a width
     fn fitted_width(&mut self, area_w: c_int) -> CompResult<c_int> {
         Ok(if self.config.menu_width > 0 {
             self.config.menu_width as c_int
@@ -62,7 +63,13 @@ impl Drw {
                 0
             };
             let itemw = self.get_items().iter().map(|i| i.width).max().unwrap_or(0);
-            (itemw + promptw).max(self.config.min_width as c_int)
+            // the prompt sets a floor rather than adding to the items, so a
+            // short entry doesn't make the menu as wide as prompt plus entry
+            let mut width = itemw.max(promptw).max(self.config.min_width as c_int);
+            if self.config.max_width > 0 {
+                width = width.min(self.config.max_width as c_int);
+            }
+            width
         }
         .min(area_w))
     }
